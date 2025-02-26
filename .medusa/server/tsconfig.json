@@ -16,6 +16,7 @@
     "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "checkJs": false,
     "strictNullChecks": true
   },
   "include": [
