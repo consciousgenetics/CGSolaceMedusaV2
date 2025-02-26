@@ -1,9 +1,9 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "yarn install && yarn migrate && yarn seed && yarn build"
+buildCommand = "cd .medusa/server && yarn install && yarn predeploy"
 
 [deploy]
-startCommand = "yarn start"
+startCommand = "cd .medusa/server && yarn run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
