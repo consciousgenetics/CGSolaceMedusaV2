@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "yarn install && mkdir -p .medusa/server && cp tsconfig.json .medusa/server/ && yarn build"
+buildCommand = "yarn install && yarn migrate && yarn seed && yarn build"
 
 [deploy]
 startCommand = "yarn start"
