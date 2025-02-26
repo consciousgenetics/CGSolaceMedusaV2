@@ -23,7 +23,9 @@
     "swc": true
   },
   "include": [
-    "**/*",
+    "src/**/*",
+    "medusa-config.ts",
+    "instrumentation.ts",
     ".medusa/types/*"
   ],
   "exclude": [
