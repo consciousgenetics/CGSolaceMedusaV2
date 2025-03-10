@@ -34,18 +34,35 @@ done
 echo "Cleaning previous build..."
 rm -rf dist || echo "No dist directory to clean"
 
-# Install dependencies with extended timeout and verbose logging
-echo "Installing dependencies..."
+# Configure yarn
+echo "Configuring yarn..."
 yarn config set network-timeout 600000
 yarn config set network-concurrency 1
-yarn install --frozen-lockfile --verbose || {
-    echo "Yarn install failed. Checking yarn cache and network..."
-    yarn cache list
-    yarn config list
-    echo "Attempting to clear yarn cache and retry..."
-    yarn cache clean
-    yarn install --frozen-lockfile --verbose
-}
+yarn config set registry https://registry.npmjs.org/
+
+# Install dependencies with retry logic
+echo "Installing dependencies..."
+max_retries=3
+retry_count=1
+
+while [ $retry_count -le $max_retries ]; do
+    echo "Attempt $retry_count of $max_retries"
+    if yarn install --frozen-lockfile --prefer-offline --verbose; then
+        echo "Dependencies installed successfully"
+        break
+    else
+        echo "Installation failed, checking yarn cache and network..."
+        yarn cache list
+        yarn config list
+        if [ $retry_count -eq $max_retries ]; then
+            echo "All retry attempts failed"
+            exit 1
+        fi
+        echo "Clearing yarn cache and retrying..."
+        yarn cache clean
+        retry_count=$((retry_count + 1))
+    fi
+done
 
 # Build the application with increased memory limit
 echo "Building application..."
