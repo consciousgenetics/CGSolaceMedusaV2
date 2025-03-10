@@ -15,7 +15,8 @@
   "scripts": {
     "clean": "rm -rf dist || true",
     "prebuild": "yarn clean",
-    "build": "NODE_ENV=production NODE_OPTIONS=--max-old-space-size=4096 medusa build",
+    "build": "./build.sh",
+    "build:medusa": "NODE_ENV=production medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "medusa start",
     "dev": "medusa develop",

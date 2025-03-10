@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ['nodejs', 'yarn', 'python3', 'gcc', 'gnumake']
+
+[phases.install]
+cmds = ['yarn install --network-timeout 600000']
+
+[phases.build]
+cmds = ['chmod +x build.sh', './build.sh']
+
+[start]
+cmd = 'yarn start' 
