@@ -17,17 +17,18 @@ RUN npm --version
 # Copy package files
 COPY package.json yarn.lock ./
 
-# First install all dependencies from package.json
-RUN npm install --no-audit --no-fund
+# First install all dependencies from package.json with legacy peer deps
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 
-# Then install additional required packages
-RUN npm install --save \
-    @medusajs/medusa@latest \
-    medusa-fulfillment-manual@latest \
-    medusa-payment-manual@latest \
-    @medusajs/file-local@latest \
-    @medusajs/event-bus-redis@latest \
-    @medusajs/cache-redis@latest
+# Then install specific versions of required packages
+RUN npm install --save --legacy-peer-deps \
+    @medusajs/medusa@2.0.3 \
+    @medusajs/framework@2.0.3 \
+    medusa-fulfillment-manual@1.1.38 \
+    medusa-payment-manual@1.0.24 \
+    @medusajs/file-local@1.0.2 \
+    @medusajs/event-bus-redis@1.8.9 \
+    @medusajs/cache-redis@1.8.9
 
 # Copy the rest of the application
 COPY . .
@@ -62,7 +63,7 @@ RUN if [ ! -f instrumentation.ts ]; then \
     fi
 
 # Install Medusa CLI globally and build admin UI
-RUN npm install -g @medusajs/medusa-cli && \
+RUN npm install -g @medusajs/medusa-cli@2.0.3 && \
     npm run build && \
     medusa build
 
@@ -79,16 +80,17 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire application from the builder stage
 COPY --from=builder /app/ /app/
 
-# Install production dependencies
-RUN npm install --production --no-audit --no-fund && \
-    npm install -g ts-node typescript @medusajs/medusa-cli && \
-    npm install --save \
-    @medusajs/medusa@latest \
-    medusa-fulfillment-manual@latest \
-    medusa-payment-manual@latest \
-    @medusajs/file-local@latest \
-    @medusajs/event-bus-redis@latest \
-    @medusajs/cache-redis@latest
+# Install production dependencies with legacy peer deps
+RUN npm install --production --legacy-peer-deps --no-audit --no-fund && \
+    npm install -g ts-node typescript @medusajs/medusa-cli@2.0.3 && \
+    npm install --save --legacy-peer-deps \
+    @medusajs/medusa@2.0.3 \
+    @medusajs/framework@2.0.3 \
+    medusa-fulfillment-manual@1.1.38 \
+    medusa-payment-manual@1.0.24 \
+    @medusajs/file-local@1.0.2 \
+    @medusajs/event-bus-redis@1.8.9 \
+    @medusajs/cache-redis@1.8.9
 
 # Create empty instrumentation file if it doesn't exist
 RUN if [ ! -f instrumentation.js ]; then \

@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("@medusajs/framework/utils");
 const dotenv = require('dotenv');
 
 let ENV_FILE_NAME = '';
@@ -83,7 +82,8 @@ module.exports = {
         cacheService: {
             resolve: "@medusajs/cache-redis",
             options: {
-                redisUrl: REDIS_URL
+                redisUrl: REDIS_URL,
+                ttl: 30
             }
         }
     }
