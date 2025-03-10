@@ -22,6 +22,8 @@ import type { IUserModuleService } from '@medusajs/framework/types'
 import type { IFileModuleService } from '@medusajs/framework/types'
 import type { IFulfillmentModuleService } from '@medusajs/framework/types'
 import type { INotificationModuleService } from '@medusajs/framework/types'
+import type EventBus from '@medusajs/event-bus-redis'
+import type CacheService from '@medusajs/cache-redis'
 
 declare module '@medusajs/framework/types' {
   interface ModuleImplementations {
@@ -48,6 +50,8 @@ declare module '@medusajs/framework/types' {
     'user': IUserModuleService,
     'file': IFileModuleService,
     'fulfillment': IFulfillmentModuleService,
-    'notification': INotificationModuleService
+    'notification': INotificationModuleService,
+    'eventBus': InstanceType<(typeof EventBus)['service']>,
+    'cacheService': InstanceType<(typeof CacheService)['service']>
   }
 }
