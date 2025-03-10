@@ -18,13 +18,13 @@ RUN npm --version
 COPY package.json yarn.lock ./
 
 # Install dependencies with npm (including dev dependencies for build)
-RUN npm install --no-audit --no-fund --loglevel verbose
-
-# Install required Medusa plugins
-RUN npm install medusa-fulfillment-manual medusa-payment-manual medusa-file-s3 @medusajs/file-local
+RUN npm ci --no-audit --no-fund --loglevel verbose || npm install --no-audit --no-fund --loglevel verbose
 
 # Copy the rest of the application
 COPY . .
+
+# Install required Medusa plugins
+RUN npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local
 
 # Make scripts executable
 RUN chmod +x build.sh
@@ -73,9 +73,9 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app/ /app/
 
 # Install production dependencies and ts-node
-RUN npm install --production --no-audit --no-fund && \
+RUN npm ci --only=production --no-audit --no-fund || npm install --only=production --no-audit --no-fund && \
     npm install -g ts-node typescript @medusajs/medusa-cli && \
-    npm install medusa-fulfillment-manual medusa-payment-manual medusa-file-s3 @medusajs/file-local
+    npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local
 
 # Create empty instrumentation file if it doesn't exist
 RUN if [ ! -f instrumentation.js ]; then \
