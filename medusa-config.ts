@@ -2,13 +2,11 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
-if (!process.env.REDIS_URL) {
-  throw new Error('REDIS_URL is required for production deployment')
-}
+const REDIS_URL = process.env.REDIS_URL || ''
 
 module.exports = defineConfig({
   projectConfig: {
-    redisUrl: process.env.REDIS_URL,
+    redisUrl: REDIS_URL,
     databaseUrl: process.env.DATABASE_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
@@ -22,13 +20,15 @@ module.exports = defineConfig({
     eventBus: {
       resolve: "@medusajs/event-bus-redis",
       options: {
-        redisUrl: process.env.REDIS_URL
+        redisUrl: REDIS_URL,
+        type: "redis"
       }
     },
     cacheService: {
       resolve: "@medusajs/cache-redis",
       options: {
-        redisUrl: process.env.REDIS_URL
+        redisUrl: REDIS_URL,
+        type: "redis"
       }
     }
   },
