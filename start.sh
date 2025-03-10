@@ -26,15 +26,6 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-# Install required plugins and modules
-echo "Installing required plugins and modules..."
-npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local @medusajs/event-bus-redis @medusajs/cache-redis
-
-# Build the application
-echo "Building the application..."
-npm run build
-medusa build
-
 # Run migrations
 echo "Running migrations..."
 medusa migrations run || echo "Migrations failed, but continuing..."
