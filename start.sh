@@ -25,6 +25,10 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
+# Install required plugins
+echo "Installing required plugins..."
+npm install medusa-fulfillment-manual medusa-payment-manual
+
 # Create admin UI directories and files
 echo "Creating admin UI directories and files..."
 mkdir -p build/admin dist/admin admin/build admin/dist && \
@@ -43,6 +47,10 @@ ls -la build/admin || echo "build/admin not found"
 ls -la dist/admin || echo "dist/admin not found"
 ls -la admin/build || echo "admin/build not found"
 ls -la admin/dist || echo "admin/dist not found"
+
+# List installed plugins
+echo "Listing installed plugins:"
+npm list medusa-fulfillment-manual medusa-payment-manual
 
 # Try to build the admin UI again
 echo "Building admin UI again..."

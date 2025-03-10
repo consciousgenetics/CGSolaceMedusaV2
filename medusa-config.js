@@ -47,8 +47,14 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 // This is the place to include plugins. See documentation for a thorough guide on plugins.
 const plugins = [
-    `medusa-fulfillment-manual`,
-    `medusa-payment-manual`,
+    {
+        resolve: `medusa-fulfillment-manual`,
+        options: {},
+    },
+    {
+        resolve: `medusa-payment-manual`,
+        options: {},
+    },
     // Uncomment to add Stripe support.
     // You can create a Stripe account via: https://stripe.com
     // {
