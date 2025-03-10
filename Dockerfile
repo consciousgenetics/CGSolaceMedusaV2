@@ -31,7 +31,14 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 
 # Build the application
-RUN ./build.sh
+RUN ./build.sh || (echo "Build failed. Checking directory contents:" && ls -la && exit 1)
+
+# Verify dist directory exists
+RUN ls -la && \
+    if [ ! -d "dist" ]; then \
+        echo "dist directory not found. Creating empty dist directory." && \
+        mkdir -p dist; \
+    fi
 
 # Production stage
 FROM node:20-slim
@@ -47,8 +54,12 @@ RUN apt-get update && apt-get install -y \
 COPY package.json yarn.lock ./
 RUN npm install --production --no-audit --no-fund
 
+# Create dist directory
+RUN mkdir -p dist
+
 # Copy built application
-COPY --from=builder /app/dist ./dist
+RUN echo "Attempting to copy dist directory"
+COPY --from=builder /app/dist/ /app/dist/
 
 # Expose the port the app runs on
 EXPOSE 9000

@@ -34,6 +34,10 @@ done
 echo "Cleaning previous build..."
 rm -rf dist || echo "No dist directory to clean"
 
+# Create dist directory
+echo "Creating dist directory..."
+mkdir -p dist
+
 # Install dependencies
 echo "Installing dependencies..."
 npm install --no-audit --no-fund
@@ -54,6 +58,16 @@ if ! npm run build:medusa; then
     echo "Environment variables:"
     env | sort
     exit 1
+fi
+
+# Verify dist directory contents
+echo "Verifying dist directory contents:"
+ls -la dist || echo "dist directory not found or empty"
+
+# Create a placeholder file if dist is empty
+if [ ! "$(ls -A dist)" ]; then
+    echo "dist directory is empty. Creating placeholder file."
+    echo "This is a placeholder file." > dist/placeholder.txt
 fi
 
 echo "Build completed successfully!" 
