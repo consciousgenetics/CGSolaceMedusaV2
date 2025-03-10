@@ -17,11 +17,13 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 # Copy package files
 COPY package.json yarn.lock ./
 
-# Install dependencies with a different strategy
+# Configure yarn explicitly
 RUN yarn config set network-timeout 600000 && \
     yarn config set network-concurrency 1 && \
-    yarn config set registry https://registry.npmjs.org/ && \
-    yarn install --frozen-lockfile --prefer-offline --verbose
+    yarn config set registry https://registry.npmjs.org/
+
+# Install dependencies with detailed logging
+RUN yarn install --frozen-lockfile --verbose || (echo "Yarn install failed. Checking yarn cache and network..." && yarn cache list && yarn config list && exit 1)
 
 # Copy the rest of the application
 COPY . .
@@ -44,7 +46,7 @@ WORKDIR /app
 # Install production dependencies only
 COPY --from=builder /app/package.json /app/yarn.lock ./
 RUN corepack enable && corepack prepare yarn@stable --activate && \
-    yarn install --production --frozen-lockfile --prefer-offline
+    yarn install --production --frozen-lockfile
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
