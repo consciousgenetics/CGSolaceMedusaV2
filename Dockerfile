@@ -11,23 +11,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install yarn
-RUN corepack enable && corepack prepare yarn@stable --activate
-
-# Verify yarn installation
-RUN yarn --version
+# Verify npm installation
+RUN npm --version
 
 # Copy package files
 COPY package.json yarn.lock ./
 
-# Configure yarn explicitly
-RUN yarn config set network-timeout 600000 && \
-    yarn config set network-concurrency 1 && \
-    yarn config set registry https://registry.npmjs.org/ && \
-    yarn config list
-
-# Install dependencies with detailed logging
-RUN yarn install --frozen-lockfile --verbose || (echo "Yarn install failed. Checking yarn cache and network..." && yarn cache list && yarn config list && exit 1)
+# Install dependencies with npm
+RUN npm install --no-audit --no-fund --loglevel verbose
 
 # Copy the rest of the application
 COPY . .
@@ -47,10 +38,14 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install production dependencies only
-COPY --from=builder /app/package.json /app/yarn.lock ./
-RUN corepack enable && corepack prepare yarn@stable --activate && \
-    yarn install --production --frozen-lockfile
+# Install required system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files and install production dependencies
+COPY package.json yarn.lock ./
+RUN npm install --production --no-audit --no-fund
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
@@ -59,4 +54,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 9000
 
 # Start the application
-CMD ["yarn", "start"] 
+CMD ["npm", "start"] 
