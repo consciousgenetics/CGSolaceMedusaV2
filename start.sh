@@ -25,18 +25,16 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-# Create admin UI directories in all possible locations
-echo "Creating admin UI directories in all possible locations..."
-mkdir -p build/admin
-mkdir -p dist/admin
-mkdir -p admin/build
-mkdir -p admin/dist
-
-# Create index.html in all possible locations
-echo "Creating index.html in all possible locations..."
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html
+# Create admin UI directories and files
+echo "Creating admin UI directories and files..."
+mkdir -p build/admin dist/admin admin/build admin/dist && \
+touch build/admin/index.html && \
+touch dist/admin/index.html && \
+touch admin/build/index.html && \
+touch admin/dist/index.html && \
+echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html && \
+echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html && \
+echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html && \
 echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
 
 # List all directories to verify
