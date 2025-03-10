@@ -24,7 +24,7 @@ RUN npm install --no-audit --no-fund --loglevel verbose
 COPY . .
 
 # Create necessary directories if they don't exist
-RUN mkdir -p dist src static uploads build/admin
+RUN mkdir -p dist src static uploads build/admin dist/admin admin/build admin/dist
 
 # Make scripts executable
 RUN chmod +x build.sh
@@ -46,9 +46,11 @@ RUN if [ ! -f instrumentation.ts ]; then \
 RUN npm install -g @medusajs/medusa-cli && \
     medusa admin build
 
-# Ensure admin UI directory exists with index.html
-RUN mkdir -p /app/build/admin && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/build/admin/index.html
+# Create index.html in all possible admin UI locations
+RUN echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
 
 # Production stage
 FROM node:20-slim
@@ -72,11 +74,12 @@ RUN if [ ! -f instrumentation.js ]; then \
     echo "console.log('Instrumentation placeholder');" > instrumentation.js; \
     fi
 
-# Ensure admin UI directory exists with index.html
-RUN mkdir -p /app/build/admin && \
-    if [ ! -f /app/build/admin/index.html ]; then \
-        echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/build/admin/index.html; \
-    fi
+# Create admin UI directories in all possible locations
+RUN mkdir -p build/admin dist/admin admin/build admin/dist && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
 
 # Set environment variables
 ENV NODE_ENV=production
