@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "medusa build",
-    "start": "medusa migrations run && medusa start",
+    "start": "npm run migrate && NODE_ENV=production medusa start",
     "dev": "medusa develop",
     "seed": "medusa seed -f ./data/seed.json",
     "migrate": "medusa migrations run",
