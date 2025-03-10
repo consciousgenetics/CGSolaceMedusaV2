@@ -29,39 +29,27 @@ done
 echo "Creating admin UI directories in all possible locations..."
 mkdir -p build/admin
 mkdir -p dist/admin
-mkdir -p /app/build/admin
-mkdir -p /app/dist/admin
 mkdir -p admin/build
 mkdir -p admin/dist
-mkdir -p /app/admin/build
-mkdir -p /app/admin/dist
 
 # Create index.html in all possible locations
 echo "Creating index.html in all possible locations..."
 echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
 echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/build/admin/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/dist/admin/index.html
 echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html
 echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/admin/build/index.html
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > /app/admin/dist/index.html
 
 # List all directories to verify
 echo "Listing all directories to verify:"
 ls -la build/admin || echo "build/admin not found"
 ls -la dist/admin || echo "dist/admin not found"
-ls -la /app/build/admin || echo "/app/build/admin not found"
-ls -la /app/dist/admin || echo "/app/dist/admin not found"
 ls -la admin/build || echo "admin/build not found"
 ls -la admin/dist || echo "admin/dist not found"
-ls -la /app/admin/build || echo "/app/admin/build not found"
-ls -la /app/admin/dist || echo "/app/admin/dist not found"
 
 # Try to build the admin UI again
 echo "Building admin UI again..."
 npm install -g @medusajs/medusa-cli
-medusa admin build
+medusa admin build || echo "Admin build failed, but continuing..."
 
 # Start the server
 echo "Starting Medusa server..."
