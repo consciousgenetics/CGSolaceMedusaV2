@@ -54,12 +54,15 @@ RUN apt-get update && apt-get install -y \
 COPY package.json yarn.lock ./
 RUN npm install --production --no-audit --no-fund
 
-# Create dist directory
-RUN mkdir -p dist
-
-# Copy built application
-RUN echo "Attempting to copy dist directory"
+# Copy all necessary files from builder
 COPY --from=builder /app/dist/ /app/dist/
+COPY --from=builder /app/medusa-config.js /app/
+COPY --from=builder /app/medusa-config.ts /app/
+COPY --from=builder /app/.env /app/
+COPY --from=builder /app/tsconfig.json /app/
+COPY --from=builder /app/src/ /app/src/
+COPY --from=builder /app/static/ /app/static/
+COPY --from=builder /app/uploads/ /app/uploads/
 
 # Expose the port the app runs on
 EXPOSE 9000
