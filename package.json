@@ -14,17 +14,17 @@
   ],
   "scripts": {
     "build": "medusa build",
-    "seed": "medusa exec ./src/scripts/seed.ts",
-    "start": "medusa start",
+    "start": "medusa migrations run && medusa start",
     "dev": "medusa develop",
-    "predeploy": "medusa db:migrate && yarn build",
-    "deploy": "medusa start",
+    "seed": "medusa seed -f ./data/seed.json",
     "migrate": "medusa migrations run",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/runtime": "^7.26.0",
     "@medusajs/admin-sdk": "2.5.1",
     "@medusajs/cli": "2.5.1",
     "@medusajs/framework": "2.5.1",
@@ -39,8 +39,6 @@
     "pg": "^8.13.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.9",
-    "@babel/runtime": "^7.26.9",
     "@medusajs/test-utils": "2.5.1",
     "@mikro-orm/cli": "6.4.3",
     "@swc/core": "^1.11.1",
