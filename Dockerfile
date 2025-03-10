@@ -17,7 +17,7 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 COPY package.json yarn.lock ./
 
 # Install dependencies first (better layer caching)
-RUN yarn install --frozen-lockfile --network-timeout 600000
+RUN yarn install --frozen-lockfile --network-timeout 600000 --verbose || (echo "Yarn install failed. Checking yarn cache and network..." && yarn cache list && yarn config list && exit 1)
 
 # Copy the rest of the application
 COPY . .
@@ -28,6 +28,8 @@ RUN chmod +x build.sh
 # Set environment variables
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV YARN_NETWORK_TIMEOUT=600000
+ENV YARN_NETWORK_CONCURRENCY=1
 
 # Build the application
 RUN ./build.sh

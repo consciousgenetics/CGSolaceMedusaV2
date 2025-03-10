@@ -36,7 +36,16 @@ rm -rf dist || echo "No dist directory to clean"
 
 # Install dependencies with extended timeout and verbose logging
 echo "Installing dependencies..."
-yarn install --network-timeout 600000 --verbose
+yarn config set network-timeout 600000
+yarn config set network-concurrency 1
+yarn install --frozen-lockfile --verbose || {
+    echo "Yarn install failed. Checking yarn cache and network..."
+    yarn cache list
+    yarn config list
+    echo "Attempting to clear yarn cache and retry..."
+    yarn cache clean
+    yarn install --frozen-lockfile --verbose
+}
 
 # Build the application with increased memory limit
 echo "Building application..."
