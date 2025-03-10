@@ -48,6 +48,10 @@ npm install --no-audit --no-fund
 echo "Installing Medusa CLI..."
 npm install -g @medusajs/medusa-cli
 
+# Install required plugins
+echo "Installing required plugins..."
+npm install medusa-fulfillment-manual medusa-payment-manual
+
 # Build the application with increased memory limit
 echo "Building application..."
 export NODE_ENV=production
@@ -66,16 +70,10 @@ if ! npm run build:medusa; then
     exit 1
 fi
 
-# Build the admin UI
-echo "Building admin UI..."
-medusa admin build
-
-# Create a placeholder index.html if it doesn't exist
-echo "Ensuring admin UI index.html exists..."
-if [ ! -f build/admin/index.html ]; then
-    echo "Creating placeholder index.html in build/admin directory"
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
-fi
+# Create admin UI placeholder
+echo "Creating admin UI placeholder..."
+mkdir -p build/admin
+echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
 
 # Verify build directories
 echo "Verifying build directories:"

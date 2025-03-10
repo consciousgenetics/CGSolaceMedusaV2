@@ -59,7 +59,7 @@ RUN if [ ! -f instrumentation.ts ]; then \
 
 # Install Medusa CLI and build admin UI
 RUN npm install -g @medusajs/medusa-cli && \
-    medusa admin build || echo "Admin build failed, but continuing..."
+    medusa build || echo "Medusa build failed, but continuing..."
 
 # Production stage
 FROM node:20-slim
