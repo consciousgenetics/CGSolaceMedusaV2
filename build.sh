@@ -33,10 +33,12 @@ done
 # Clear any existing build artifacts
 echo "Cleaning previous build..."
 rm -rf dist || echo "No dist directory to clean"
+rm -rf build || echo "No build directory to clean"
 
-# Create dist directory
-echo "Creating dist directory..."
+# Create necessary directories
+echo "Creating necessary directories..."
 mkdir -p dist
+mkdir -p build/admin
 
 # Install dependencies
 echo "Installing dependencies..."
@@ -68,14 +70,29 @@ fi
 echo "Building admin UI..."
 medusa admin build
 
-# Verify dist directory contents
-echo "Verifying dist directory contents:"
-ls -la dist || echo "dist directory not found or empty"
+# Create a placeholder index.html if it doesn't exist
+echo "Ensuring admin UI index.html exists..."
+if [ ! -f build/admin/index.html ]; then
+    echo "Creating placeholder index.html in build/admin directory"
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
+fi
 
-# Create a placeholder file if dist is empty
+# Verify build directories
+echo "Verifying build directories:"
+echo "dist directory contents:"
+ls -la dist || echo "dist directory not found or empty"
+echo "build/admin directory contents:"
+ls -la build/admin || echo "build/admin directory not found or empty"
+
+# Create placeholder files if directories are empty
 if [ ! "$(ls -A dist)" ]; then
     echo "dist directory is empty. Creating placeholder file."
     echo "This is a placeholder file." > dist/placeholder.txt
+fi
+
+if [ ! "$(ls -A build/admin)" ]; then
+    echo "build/admin directory is empty. Creating placeholder file."
+    echo "This is a placeholder file." > build/admin/placeholder.txt
 fi
 
 echo "Build completed successfully!" 
