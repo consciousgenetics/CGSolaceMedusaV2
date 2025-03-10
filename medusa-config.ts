@@ -2,8 +2,11 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
+
 module.exports = defineConfig({
   projectConfig: {
+    redisUrl: REDIS_URL,
     databaseUrl: process.env.DATABASE_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
