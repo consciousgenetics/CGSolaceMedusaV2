@@ -41,6 +41,10 @@ RUN if [ ! -f instrumentation.ts ]; then \
     echo "console.log('Instrumentation placeholder');" > instrumentation.ts; \
     fi
 
+# Build the admin UI
+RUN npm install -g @medusajs/medusa-cli && \
+    medusa admin build
+
 # Production stage
 FROM node:20-slim
 
@@ -56,7 +60,7 @@ COPY --from=builder /app/ /app/
 
 # Install production dependencies and ts-node
 RUN npm install --production --no-audit --no-fund && \
-    npm install -g ts-node typescript
+    npm install -g ts-node typescript @medusajs/medusa-cli
 
 # Create empty instrumentation file if it doesn't exist
 RUN if [ ! -f instrumentation.js ]; then \

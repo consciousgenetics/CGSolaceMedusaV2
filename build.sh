@@ -42,6 +42,10 @@ mkdir -p dist
 echo "Installing dependencies..."
 npm install --no-audit --no-fund
 
+# Install Medusa CLI globally
+echo "Installing Medusa CLI..."
+npm install -g @medusajs/medusa-cli
+
 # Build the application with increased memory limit
 echo "Building application..."
 export NODE_ENV=production
@@ -59,6 +63,10 @@ if ! npm run build:medusa; then
     env | sort
     exit 1
 fi
+
+# Build the admin UI
+echo "Building admin UI..."
+medusa admin build
 
 # Verify dist directory contents
 echo "Verifying dist directory contents:"
