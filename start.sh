@@ -26,11 +26,18 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
+# Ensure production environment
+export NODE_ENV=production
+export NODE_OPTIONS="--max-old-space-size=8192"
+
 # Run migrations
 echo "Running migrations..."
 medusa migrations run || echo "Migrations failed, but continuing..."
 
+# Build the admin UI
+echo "Building admin UI..."
+medusa build
+
 # Start the server
 echo "Starting Medusa server..."
-export NODE_ENV=production
 medusa start 

@@ -17,13 +17,17 @@ RUN npm --version
 # Copy package files
 COPY package.json yarn.lock ./
 
-# Install all dependencies (including Redis modules and plugins)
-RUN npm install --no-audit --no-fund --loglevel verbose \
-    medusa-fulfillment-manual \
-    medusa-payment-manual \
-    @medusajs/file-local \
-    @medusajs/event-bus-redis \
-    @medusajs/cache-redis
+# First install all dependencies from package.json
+RUN npm install --no-audit --no-fund
+
+# Then install additional required packages
+RUN npm install --save \
+    @medusajs/medusa@latest \
+    medusa-fulfillment-manual@latest \
+    medusa-payment-manual@latest \
+    @medusajs/file-local@latest \
+    @medusajs/event-bus-redis@latest \
+    @medusajs/cache-redis@latest
 
 # Copy the rest of the application
 COPY . .
@@ -75,14 +79,16 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire application from the builder stage
 COPY --from=builder /app/ /app/
 
-# Install production dependencies and required packages
-RUN npm install --production --no-audit --no-fund \
-    medusa-fulfillment-manual \
-    medusa-payment-manual \
-    @medusajs/file-local \
-    @medusajs/event-bus-redis \
-    @medusajs/cache-redis && \
-    npm install -g ts-node typescript @medusajs/medusa-cli
+# Install production dependencies
+RUN npm install --production --no-audit --no-fund && \
+    npm install -g ts-node typescript @medusajs/medusa-cli && \
+    npm install --save \
+    @medusajs/medusa@latest \
+    medusa-fulfillment-manual@latest \
+    medusa-payment-manual@latest \
+    @medusajs/file-local@latest \
+    @medusajs/event-bus-redis@latest \
+    @medusajs/cache-redis@latest
 
 # Create empty instrumentation file if it doesn't exist
 RUN if [ ! -f instrumentation.js ]; then \
