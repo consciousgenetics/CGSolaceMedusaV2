@@ -15,6 +15,11 @@ required_vars=(
   "ADMIN_CORS"
   "AUTH_CORS"
   "MEDUSA_BACKEND_URL"
+  "S3_URL"
+  "S3_BUCKET"
+  "S3_REGION"
+  "S3_ACCESS_KEY_ID"
+  "S3_SECRET_ACCESS_KEY"
 )
 
 for var in "${required_vars[@]}"; do
@@ -27,7 +32,7 @@ done
 
 # Install required plugins
 echo "Installing required plugins..."
-npm install medusa-fulfillment-manual medusa-payment-manual
+npm install medusa-fulfillment-manual medusa-payment-manual medusa-file-s3 @medusajs/file-local
 
 # Create admin UI directories and files
 echo "Creating admin UI directories and files..."
