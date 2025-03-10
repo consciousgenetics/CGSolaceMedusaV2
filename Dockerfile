@@ -39,15 +39,13 @@ RUN mkdir -p dist src static uploads && \
     mkdir -p build/admin && \
     mkdir -p dist/admin && \
     mkdir -p admin/build && \
-    mkdir -p admin/dist && \
-    touch build/admin/index.html && \
-    touch dist/admin/index.html && \
-    touch admin/build/index.html && \
-    touch admin/dist/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
+    mkdir -p admin/dist
+
+# Create a complete admin UI structure
+RUN mkdir -p build/admin/assets && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title><link rel="stylesheet" href="./assets/index.css"></head><body><div id="root"></div><script src="./assets/index.js"></script></body></html>' > build/admin/index.html && \
+    echo 'body { font-family: Arial, sans-serif; }' > build/admin/assets/index.css && \
+    echo 'document.getElementById("root").innerHTML = "Medusa Admin";' > build/admin/assets/index.js
 
 # Build the application
 RUN ./build.sh || (echo "Build failed. Checking directory contents:" && ls -la && exit 1)
@@ -84,16 +82,11 @@ RUN if [ ! -f instrumentation.js ]; then \
     echo "console.log('Instrumentation placeholder');" > instrumentation.js; \
     fi
 
-# Create necessary directories and files
-RUN mkdir -p build/admin dist/admin admin/build admin/dist && \
-    touch build/admin/index.html && \
-    touch dist/admin/index.html && \
-    touch admin/build/index.html && \
-    touch admin/dist/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > dist/admin/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/build/index.html && \
-    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > admin/dist/index.html
+# Create a complete admin UI structure
+RUN mkdir -p build/admin/assets && \
+    echo '<!DOCTYPE html><html><head><title>Medusa Admin</title><link rel="stylesheet" href="./assets/index.css"></head><body><div id="root"></div><script src="./assets/index.js"></script></body></html>' > build/admin/index.html && \
+    echo 'body { font-family: Arial, sans-serif; }' > build/admin/assets/index.css && \
+    echo 'document.getElementById("root").innerHTML = "Medusa Admin";' > build/admin/assets/index.js
 
 # Set environment variables
 ENV NODE_ENV=production

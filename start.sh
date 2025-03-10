@@ -31,12 +31,15 @@ npm install medusa-fulfillment-manual medusa-payment-manual
 
 # Create admin UI directories and files
 echo "Creating admin UI directories and files..."
-mkdir -p build/admin
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title></head><body><div id="root"></div></body></html>' > build/admin/index.html
+mkdir -p build/admin/assets
+echo '<!DOCTYPE html><html><head><title>Medusa Admin</title><link rel="stylesheet" href="./assets/index.css"></head><body><div id="root"></div><script src="./assets/index.js"></script></body></html>' > build/admin/index.html
+echo 'body { font-family: Arial, sans-serif; }' > build/admin/assets/index.css
+echo 'document.getElementById("root").innerHTML = "Medusa Admin";' > build/admin/assets/index.js
 
 # List all directories to verify
 echo "Listing all directories to verify:"
 ls -la build/admin || echo "build/admin not found"
+ls -la build/admin/assets || echo "build/admin/assets not found"
 
 # Run migrations
 echo "Running migrations..."

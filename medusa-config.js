@@ -36,7 +36,7 @@ const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
 const AUTH_CORS = process.env.AUTH_CORS || "http://localhost:8000";
 
 // Database URL (here we use a default value for development)
-const DATABASE_URL = process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
+const DATABASE_URL = process.env.DATABASE_URL || "postgres://localhost/medusa-store";
 
 // Medusa uses Redis, so this needs configuration as well
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
@@ -47,13 +47,23 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 // This is the place to include plugins. See documentation for a thorough guide on plugins.
 const plugins = [
+    `medusa-fulfillment-manual`,
+    `medusa-payment-manual`,
     {
-        resolve: `medusa-fulfillment-manual`,
-        options: {},
+        resolve: `@medusajs/file-local`,
+        options: {
+            upload_dir: "uploads"
+        }
     },
     {
-        resolve: `medusa-payment-manual`,
-        options: {},
+        resolve: `medusa-file-s3`,
+        options: {
+            s3_url: process.env.S3_URL,
+            bucket: process.env.S3_BUCKET,
+            region: process.env.S3_REGION,
+            access_key_id: process.env.S3_ACCESS_KEY_ID,
+            secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+        },
     },
     // Uncomment to add Stripe support.
     // You can create a Stripe account via: https://stripe.com
@@ -76,6 +86,7 @@ module.exports = {
         auth_cors: AUTH_CORS,
         jwtSecret: process.env.JWT_SECRET || "supersecret",
         cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+        database_extra: { ssl: { rejectUnauthorized: false } }
     },
     plugins,
 };
