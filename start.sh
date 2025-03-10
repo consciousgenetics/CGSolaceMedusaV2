@@ -15,6 +15,7 @@ required_vars=(
   "ADMIN_CORS"
   "AUTH_CORS"
   "MEDUSA_BACKEND_URL"
+  "REDIS_URL"
 )
 
 for var in "${required_vars[@]}"; do
@@ -25,21 +26,14 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
-# Install required plugins
-echo "Installing required plugins..."
-npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local
+# Install required plugins and modules
+echo "Installing required plugins and modules..."
+npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local @medusajs/event-bus-redis @medusajs/cache-redis
 
-# Create admin UI directories and files
-echo "Creating admin UI directories and files..."
-mkdir -p build/admin/assets
-echo '<!DOCTYPE html><html><head><title>Medusa Admin</title><link rel="stylesheet" href="./assets/index.css"></head><body><div id="root"></div><script src="./assets/index.js"></script></body></html>' > build/admin/index.html
-echo 'body { font-family: Arial, sans-serif; }' > build/admin/assets/index.css
-echo 'document.getElementById("root").innerHTML = "Medusa Admin";' > build/admin/assets/index.js
-
-# List all directories to verify
-echo "Listing all directories to verify:"
-ls -la build/admin || echo "build/admin not found"
-ls -la build/admin/assets || echo "build/admin/assets not found"
+# Build the application
+echo "Building the application..."
+npm run build
+medusa build
 
 # Run migrations
 echo "Running migrations..."

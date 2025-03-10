@@ -20,6 +20,9 @@ COPY package.json yarn.lock ./
 # Install dependencies with npm (including dev dependencies for build)
 RUN npm ci --no-audit --no-fund --loglevel verbose || npm install --no-audit --no-fund --loglevel verbose
 
+# Install Redis modules
+RUN npm install --save @medusajs/event-bus-redis @medusajs/cache-redis
+
 # Copy the rest of the application
 COPY . .
 
@@ -34,7 +37,7 @@ RUN chmod +x start.sh
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 
-# Create necessary directories and files
+# Create necessary directories
 RUN mkdir -p dist src static uploads && \
     mkdir -p build/admin && \
     mkdir -p dist/admin && \
@@ -55,9 +58,10 @@ RUN if [ ! -f instrumentation.ts ]; then \
     echo "console.log('Instrumentation placeholder');" > instrumentation.ts; \
     fi
 
-# Install Medusa CLI and build admin UI
+# Install Medusa CLI globally and build admin UI
 RUN npm install -g @medusajs/medusa-cli && \
-    medusa build || echo "Medusa build failed, but continuing..."
+    npm run build && \
+    medusa build
 
 # Production stage
 FROM node:20-slim
@@ -72,10 +76,10 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire application from the builder stage
 COPY --from=builder /app/ /app/
 
-# Install production dependencies and ts-node
+# Install production dependencies and required packages
 RUN npm ci --only=production --no-audit --no-fund || npm install --only=production --no-audit --no-fund && \
     npm install -g ts-node typescript @medusajs/medusa-cli && \
-    npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local
+    npm install --save medusa-fulfillment-manual medusa-payment-manual @medusajs/file-local @medusajs/event-bus-redis @medusajs/cache-redis
 
 # Create empty instrumentation file if it doesn't exist
 RUN if [ ! -f instrumentation.js ]; then \
