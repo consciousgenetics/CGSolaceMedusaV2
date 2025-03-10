@@ -14,13 +14,17 @@ RUN apt-get update && apt-get install -y \
 # Install yarn
 RUN corepack enable && corepack prepare yarn@stable --activate
 
+# Verify yarn installation
+RUN yarn --version
+
 # Copy package files
 COPY package.json yarn.lock ./
 
 # Configure yarn explicitly
 RUN yarn config set network-timeout 600000 && \
     yarn config set network-concurrency 1 && \
-    yarn config set registry https://registry.npmjs.org/
+    yarn config set registry https://registry.npmjs.org/ && \
+    yarn config list
 
 # Install dependencies with detailed logging
 RUN yarn install --frozen-lockfile --verbose || (echo "Yarn install failed. Checking yarn cache and network..." && yarn cache list && yarn config list && exit 1)
