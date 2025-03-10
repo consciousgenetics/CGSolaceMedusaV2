@@ -1,6 +1,6 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "yarn install --network-timeout 100000 && yarn build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "yarn start"
