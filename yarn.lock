@@ -2183,24 +2183,10 @@
   resolved "https://registry.npmjs.org/@medusajs/file-local/-/file-local-2.5.1.tgz"
   integrity sha512-CXrO66bQYL83j+RhYd7lPYDo4BCm4GA6ROGM0WqnpmXIphvMz1X2ZNVp8+6Z5VwbjkjVqg6cnd4EKOL6bKlPjQ==
 
-"@medusajs/file-local@^2.6.0":
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/@medusajs/file-local/-/file-local-2.6.0.tgz#5b2182675eae416621983514189401fc8f9b68cc"
-  integrity sha512-ITn6iFe2THjJ4IcbFWnH3hQZ13NbCy8f7bsfmebt57glB58gY9lw5zi3UiLOve292UIOAscL0RwjC5KN9jVCXw==
-
 "@medusajs/file-s3@^2.5.1":
   version "2.5.1"
   resolved "https://registry.npmjs.org/@medusajs/file-s3/-/file-s3-2.5.1.tgz"
   integrity sha512-nSP3yAhR4iN8boGPgnLhmnnGbtu3hGjPJkr5qK82xg/GYSQnLyS/dM6PzZTXvLnW3cqq5JSqO0Vs6lPkigPhfQ==
-  dependencies:
-    "@aws-sdk/client-s3" "^3.556.0"
-    "@aws-sdk/s3-request-presigner" "^3.556.0"
-    ulid "^2.3.0"
-
-"@medusajs/file-s3@^2.6.0":
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/@medusajs/file-s3/-/file-s3-2.6.0.tgz#d6969a64b8fe9170dca055f53231270c68d95aa9"
-  integrity sha512-sLsQmE8SRcGHqhLbaYANWKNhGtcVOIz9pSRpmSIDdTlmUfLGLl0EyMh3crz6s9+kh6ws1K63p73nrkPvAj2zcQ==
   dependencies:
     "@aws-sdk/client-s3" "^3.556.0"
     "@aws-sdk/s3-request-presigner" "^3.556.0"
