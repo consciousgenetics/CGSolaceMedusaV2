@@ -1,10 +1,10 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "yarn install && yarn build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "cd .medusa/server && yarn install && yarn predeploy && yarn run start"
-healthcheckPath = "/health"
-healthcheckTimeout = 200
+healthcheckPath = "/health-check"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10 
+restartPolicyMaxRetries = 10
+sleepApplication = false 

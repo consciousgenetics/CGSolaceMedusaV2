@@ -40,6 +40,16 @@ export async function GET(
         return originalFetch.call(this, resource, init);
       };
       
+      // Also patch XMLHttpRequest just in case
+      const originalOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        if (typeof url === 'string' && url.includes('http://localhost:9000')) {
+          url = url.replace('http://localhost:9000', '${backendUrl}');
+          console.log('[URL Rewrite] Rewriting XHR URL to:', url);
+        }
+        return originalOpen.call(this, method, url, ...rest);
+      };
+      
       // Periodically check for XHR and fetch in react components
       const observer = new MutationObserver(() => {
         setTimeout(() => {
@@ -68,30 +78,63 @@ EOF
 
 echo "✅ Created fix-url API route"
 
-# Wait for the build to complete
-echo "⏳ Waiting for admin build to complete..."
-sleep 10
+# Try to find admin HTML - check different possible locations
+ADMIN_HTML_LOCATIONS=(
+  ".medusa/server/public/admin/index.html"
+  "dist/admin/index.html"
+  "./.cache/admin/index.html"
+  "build/admin/index.html"
+)
 
-# Path to the admin panel index.html
-ADMIN_HTML=".medusa/server/public/admin/index.html"
+FOUND_HTML=false
 
-# Check if the admin panel HTML exists
-if [ -f "$ADMIN_HTML" ]; then
-  # Backup the original file
-  cp "$ADMIN_HTML" "$ADMIN_HTML.bak"
+for ADMIN_HTML in "${ADMIN_HTML_LOCATIONS[@]}"; do
+  echo "Checking for admin HTML at: $ADMIN_HTML"
   
-  # Insert our script tag after the <head> tag
-  sed -i '/<head>/a \
-    <script>\
-      // Inject our URL fixing script\
-      const script = document.createElement("script");\
-      script.src = "/api/admin/fix-url";\
-      document.head.appendChild(script);\
-    </script>' "$ADMIN_HTML"
-  
-  echo "✅ Patched admin panel HTML"
-else
-  echo "❌ Admin panel HTML file not found at $ADMIN_HTML"
+  if [ -f "$ADMIN_HTML" ]; then
+    echo "Found admin HTML at: $ADMIN_HTML"
+    FOUND_HTML=true
+    
+    # Backup the original file
+    cp "$ADMIN_HTML" "$ADMIN_HTML.bak"
+    
+    # Check if our script is already inserted
+    if grep -q "/api/admin/fix-url" "$ADMIN_HTML"; then
+      echo "Script already injected, skipping modification"
+    else
+      # Insert our script tag after the <head> tag
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS requires an empty string as the -i parameter
+        sed -i '' '/<head>/a \
+        <script>\
+          // Inject our URL fixing script\
+          const script = document.createElement("script");\
+          script.src = "/api/admin/fix-url";\
+          document.head.appendChild(script);\
+        </script>' "$ADMIN_HTML"
+      else
+        # Linux
+        sed -i '/<head>/a \
+        <script>\
+          // Inject our URL fixing script\
+          const script = document.createElement("script");\
+          script.src = "/api/admin/fix-url";\
+          document.head.appendChild(script);\
+        </script>' "$ADMIN_HTML"
+      fi
+      
+      echo "✅ Patched admin panel HTML"
+    fi
+    
+    # Break after finding the first valid HTML file
+    break
+  fi
+done
+
+if [ "$FOUND_HTML" = false ]; then
+  echo "❌ Admin panel HTML file not found in any of the checked locations"
+  echo "Please run 'yarn build' first to generate the admin panel files"
+  exit 1
 fi
 
-echo "🚀 Fix complete! The admin panel should now work correctly." 
+echo "🚀 Fix complete! The admin panel should now work correctly when accessed through your domain." 
