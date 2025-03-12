@@ -9,6 +9,7 @@ build/
 .next/
 out/
 .cache/
+.medusa/
 
 # Environment variables
 .env
