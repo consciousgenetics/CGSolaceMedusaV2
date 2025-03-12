@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 buildCommand = "yarn install && yarn build"
 
 [deploy]
-startCommand = "cd .medusa/server && yarn install && yarn run start"
+startCommand = "cd .medusa/server && yarn install && yarn predeploy && yarn run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 200
 restartPolicyType = "ON_FAILURE"
