@@ -1,0 +1,131 @@
+import { loadEnv, Modules, defineConfig } from '@medusajs/utils';
+import {
+  ADMIN_CORS,
+  AUTH_CORS,
+  BACKEND_URL,
+  COOKIE_SECRET,
+  DATABASE_URL,
+  JWT_SECRET,
+  REDIS_URL,
+  RESEND_API_KEY,
+  RESEND_FROM_EMAIL,
+  SENDGRID_API_KEY,
+  SENDGRID_FROM_EMAIL,
+  SHOULD_DISABLE_ADMIN,
+  STORE_CORS,
+  STRIPE_API_KEY,
+  STRIPE_WEBHOOK_SECRET,
+  WORKER_MODE,
+  MINIO_ENDPOINT,
+  MINIO_ACCESS_KEY,
+  MINIO_SECRET_KEY,
+  MINIO_BUCKET,
+  MEILISEARCH_HOST,
+  MEILISEARCH_ADMIN_KEY
+} from 'lib/constants';
+import { MARKETPLACE_MODULE } from 'modules/marketplace';
+
+loadEnv(process.env.NODE_ENV, process.cwd());
+
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+
+const fileModule = isDevelopment
+  ? {
+      resolve: '@medusajs/medusa/file',
+      options: {
+        providers: [
+          {
+            resolve: '@medusajs/medusa/file-local',
+            id: 'local',
+            options: {
+              // Add specific provider options here for the local setup
+            },
+          },
+        ],
+      },
+    }
+  : {
+      key: Modules.FILE,
+      resolve: '@medusajs/file',
+      id: 's3',
+      options: {
+        providers: [
+          {
+            resolve: `@medusajs/file-s3`,
+            options: {
+              s3_url: S3_URL,
+              bucket: S3_BUCKET,
+              region: S3_REGION,
+              access_key_id: S3_ACCESS_KEY_ID,
+              secret_access_key: S3_SECRET_ACCESS_KEY,
+              cache_control: S3_CACHE_CONTROL,
+              access: S3_ACCESS,
+              file_url: S3_URL,
+            },
+          },
+        ],
+      },
+    };
+
+const medusaConfig = {
+  projectConfig: {
+    databaseUrl: DATABASE_URL,
+    databaseLogging: false,
+    redisUrl: REDIS_URL,
+    workerMode: WORKER_MODE,
+    http: {
+      adminCors: ADMIN_CORS,
+      authCors: AUTH_CORS,
+      storeCors: STORE_CORS,
+      jwtSecret: JWT_SECRET,
+      cookieSecret: COOKIE_SECRET
+    }
+  },
+  admin: {
+    backendUrl: BACKEND_URL,
+    disable: SHOULD_DISABLE_ADMIN,
+  },
+  modules: [
+    fileModule,
+    ...(REDIS_URL ? [{
+      key: Modules.EVENT_BUS,
+      resolve: '@medusajs/event-bus-redis',
+      options: {
+        redisUrl: REDIS_URL
+      }
+    },
+    {
+      key: Modules.WORKFLOW_ENGINE,
+      resolve: '@medusajs/workflow-engine-redis',
+      options: {
+        redis: {
+          url: REDIS_URL,
+        }
+      }
+    }] : []),
+      {
+      key: Modules.NOTIFICATION,
+      resolve: '@medusajs/notification',
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/notification-sendgrid",
+            id: "sendgrid",
+            options: {
+              channels: ["email"],
+              api_key: process.env.SENDGRID_API_KEY,
+              from: process.env.SENDGRID_FROM,
+            },
+          },
+
+        ]
+      }
+    },
+  ],
+  plugins: [
+  ]
+};
+
+console.log(JSON.stringify(medusaConfig, null, 2));
+export default defineConfig(medusaConfig);

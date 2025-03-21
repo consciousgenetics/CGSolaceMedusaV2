@@ -11,16 +11,13 @@ export default async function orderPlacedHandler({
   const orderModuleService: IOrderModuleService = container.resolve(Modules.ORDER)
   
   const order = await orderModuleService.retrieveOrder(data.id, { relations: ['items', 'summary', 'shipping_address'] })
-  //@ts-ignore
   const shippingAddress = await (orderModuleService as any).orderAddressService_.retrieve(order.shipping_address.id)
 
-  console.log("sending order placed notification")
   try {
     await notificationModuleService.createNotifications({
-      //@ts-ignore
       to: order.email,
       channel: 'email',
-      template: EmailTemplates.ORDER_PLACED,
+      template: process.env.SENDGRID_ORDER_PLACED_ID,
       data: {
         emailOptions: {
           replyTo: 'info@example.com',

@@ -1,7 +1,7 @@
 import { Text, Section, Hr } from '@react-email/components'
 import * as React from 'react'
 import { Base } from './base'
-import { OrderDTO, OrderAddressDTO } from '@medusajs/types/dist/order/common'
+import { OrderDTO, OrderAddressDTO } from '@medusajs/framework/types'
 
 export const ORDER_PLACED = 'order-placed'
 
@@ -88,9 +88,7 @@ export const OrderPlacedTemplate: React.FC<OrderPlacedTemplateProps> & {
             <Text style={{ fontWeight: 'bold' }}>Quantity</Text>
             <Text style={{ fontWeight: 'bold' }}>Price</Text>
           </div>
-          {
-          //@ts-ignore
-          order.items.map((item) => (
+          {order.items.map((item) => (
             <div key={item.id} style={{
               display: 'flex',
               justifyContent: 'space-between',
