@@ -1,40 +1,26 @@
-# Dependency directories
-node_modules/
-.pnp/
-.pnp.js
-
-# Build directories
-dist/
-build/
-.next/
-out/
-.cache/
-.medusa/
-
-# Environment variables
+/dist
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Editor directories and files
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
 .DS_Store
-Thumbs.db
+/uploads
+/node_modules
+yarn-error.log
+.medusa-copy
+/.idea
+static
+coverage
 
-# Medusa specific
-.medusa/admin/
-uploads/
+!src/**
+
+./tsconfig.tsbuildinfo
+# package-lock.json
+yarn.lock
+medusa-db.sql
+build
+.cache
+
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
