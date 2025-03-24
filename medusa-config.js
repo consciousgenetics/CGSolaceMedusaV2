@@ -23,7 +23,7 @@ import {
   MEILISEARCH_HOST,
   MEILISEARCH_ADMIN_KEY
 } from './src/lib/constants';
-import { MARKETPLACE_MODULE } from 'modules/marketplace';
+// import { MARKETPLACE_MODULE } from 'modules/marketplace';
 
 loadEnv(process.env.NODE_ENV, process.cwd());
 
