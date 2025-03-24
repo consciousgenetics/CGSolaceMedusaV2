@@ -123,12 +123,6 @@ const medusaConfig = {
       }
     },
   ],
-  plugins: [
-    {
-      resolve: `medusa-plugin-marketplace`,
-      // your marketplace configuration options
-    },
-  ]
 };
 
 console.log(JSON.stringify(medusaConfig, null, 2));

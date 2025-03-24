@@ -20,6 +20,7 @@ export default async function orderPlacedHandler({
       template: process.env.SENDGRID_ORDER_PLACED_ID,
       data: {
         emailOptions: {
+          from: 'info@consciousgenetics.com',
           replyTo: 'info@example.com',
           subject: 'Your order has been placed'
         },
