@@ -124,6 +124,10 @@ const medusaConfig = {
     },
   ],
   plugins: [
+    {
+      resolve: `medusa-plugin-marketplace`,
+      // your marketplace configuration options
+    },
   ]
 };
 

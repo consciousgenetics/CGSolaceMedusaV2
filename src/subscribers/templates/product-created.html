@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Product Created</title>
+</head>
+<body>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">New Product Created</h1>
+        <p>A new product has been created in your store:</p>
+        <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
+            <h2 style="margin-top: 0;">{{product.title}}</h2>
+            <p><strong>Product ID:</strong> {{product.id}}</p>
+            <p><strong>Created on:</strong> {{date}}</p>
+            <p><strong>Description:</strong> {{product.description}}</p>
+        </div>
+        <p style="margin-top: 20px;">
+            View the product in your admin panel to make any necessary changes.
+        </p>
+    </div>
+</body>
+</html>
