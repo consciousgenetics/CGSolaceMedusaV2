@@ -22,7 +22,7 @@ import {
   MINIO_BUCKET,
   MEILISEARCH_HOST,
   MEILISEARCH_ADMIN_KEY
-} from 'lib/constants';
+} from './src/lib/constants';
 import { MARKETPLACE_MODULE } from 'modules/marketplace';
 
 loadEnv(process.env.NODE_ENV, process.cwd());
@@ -54,14 +54,14 @@ const fileModule = isDevelopment
           {
             resolve: `@medusajs/file-s3`,
             options: {
-              s3_url: S3_URL,
-              bucket: S3_BUCKET,
-              region: S3_REGION,
-              access_key_id: S3_ACCESS_KEY_ID,
-              secret_access_key: S3_SECRET_ACCESS_KEY,
-              cache_control: S3_CACHE_CONTROL,
-              access: S3_ACCESS,
-              file_url: S3_URL,
+              s3_url: process.env.S3_FILE_URL,
+              bucket: process.env.S3_BUCKET,
+              region: process.env.S3_REGION,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              cache_control: process.env.S3_CACHE_CONTROL,
+              access: process.env.S3_ACCESS,
+              file_url: process.env.S3_FILE_URL,
             },
           },
         ],
