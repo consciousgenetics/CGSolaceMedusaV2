@@ -1,53 +1,53 @@
-import type { ICacheService } from '@medusajs/framework/types'
-import type { IEventBusModuleService } from '@medusajs/framework/types'
-import type { IWorkflowEngineService } from '@medusajs/framework/types'
-import type { ILockingModule } from '@medusajs/framework/types'
-import type { IStockLocationService } from '@medusajs/framework/types'
-import type { IInventoryService } from '@medusajs/framework/types'
-import type { IProductModuleService } from '@medusajs/framework/types'
-import type { IPricingModuleService } from '@medusajs/framework/types'
-import type { IPromotionModuleService } from '@medusajs/framework/types'
-import type { ICustomerModuleService } from '@medusajs/framework/types'
-import type { ISalesChannelModuleService } from '@medusajs/framework/types'
-import type { ICartModuleService } from '@medusajs/framework/types'
-import type { IRegionModuleService } from '@medusajs/framework/types'
-import type { IApiKeyModuleService } from '@medusajs/framework/types'
-import type { IStoreModuleService } from '@medusajs/framework/types'
-import type { ITaxModuleService } from '@medusajs/framework/types'
-import type { ICurrencyModuleService } from '@medusajs/framework/types'
-import type { IPaymentModuleService } from '@medusajs/framework/types'
-import type { IOrderModuleService } from '@medusajs/framework/types'
-import type { IAuthModuleService } from '@medusajs/framework/types'
-import type { IUserModuleService } from '@medusajs/framework/types'
-import type { IFileModuleService } from '@medusajs/framework/types'
-import type { IFulfillmentModuleService } from '@medusajs/framework/types'
-import type { INotificationModuleService } from '@medusajs/framework/types'
+import type Cache from '@medusajs/medusa/cache-inmemory'
+import type EventBus from '@medusajs/event-bus-redis'
+import type Workflows from '@medusajs/workflow-engine-redis'
+import type Locking from '@medusajs/medusa/locking'
+import type StockLocation from '@medusajs/medusa/stock-location'
+import type Inventory from '@medusajs/medusa/inventory'
+import type Product from '@medusajs/medusa/product'
+import type Pricing from '@medusajs/medusa/pricing'
+import type Promotion from '@medusajs/medusa/promotion'
+import type Customer from '@medusajs/medusa/customer'
+import type SalesChannel from '@medusajs/medusa/sales-channel'
+import type Cart from '@medusajs/medusa/cart'
+import type Region from '@medusajs/medusa/region'
+import type ApiKey from '@medusajs/medusa/api-key'
+import type Store from '@medusajs/medusa/store'
+import type Tax from '@medusajs/medusa/tax'
+import type Currency from '@medusajs/medusa/currency'
+import type Payment from '@medusajs/medusa/payment'
+import type Order from '@medusajs/medusa/order'
+import type Auth from '@medusajs/medusa/auth'
+import type User from '@medusajs/medusa/user'
+import type File from '@medusajs/medusa/file'
+import type Fulfillment from '@medusajs/medusa/fulfillment'
+import type Notification from '@medusajs/notification'
 
 declare module '@medusajs/framework/types' {
   interface ModuleImplementations {
-    'cache': ICacheService,
-    'event_bus': IEventBusModuleService,
-    'workflows': IWorkflowEngineService,
-    'locking': ILockingModule,
-    'stock_location': IStockLocationService,
-    'inventory': IInventoryService,
-    'product': IProductModuleService,
-    'pricing': IPricingModuleService,
-    'promotion': IPromotionModuleService,
-    'customer': ICustomerModuleService,
-    'sales_channel': ISalesChannelModuleService,
-    'cart': ICartModuleService,
-    'region': IRegionModuleService,
-    'api_key': IApiKeyModuleService,
-    'store': IStoreModuleService,
-    'tax': ITaxModuleService,
-    'currency': ICurrencyModuleService,
-    'payment': IPaymentModuleService,
-    'order': IOrderModuleService,
-    'auth': IAuthModuleService,
-    'user': IUserModuleService,
-    'file': IFileModuleService,
-    'fulfillment': IFulfillmentModuleService,
-    'notification': INotificationModuleService
+    cache: InstanceType<(typeof Cache)['service']>,
+    event_bus: InstanceType<(typeof EventBus)['service']>,
+    workflows: InstanceType<(typeof Workflows)['service']>,
+    locking: InstanceType<(typeof Locking)['service']>,
+    stock_location: InstanceType<(typeof StockLocation)['service']>,
+    inventory: InstanceType<(typeof Inventory)['service']>,
+    product: InstanceType<(typeof Product)['service']>,
+    pricing: InstanceType<(typeof Pricing)['service']>,
+    promotion: InstanceType<(typeof Promotion)['service']>,
+    customer: InstanceType<(typeof Customer)['service']>,
+    sales_channel: InstanceType<(typeof SalesChannel)['service']>,
+    cart: InstanceType<(typeof Cart)['service']>,
+    region: InstanceType<(typeof Region)['service']>,
+    api_key: InstanceType<(typeof ApiKey)['service']>,
+    store: InstanceType<(typeof Store)['service']>,
+    tax: InstanceType<(typeof Tax)['service']>,
+    currency: InstanceType<(typeof Currency)['service']>,
+    payment: InstanceType<(typeof Payment)['service']>,
+    order: InstanceType<(typeof Order)['service']>,
+    auth: InstanceType<(typeof Auth)['service']>,
+    user: InstanceType<(typeof User)['service']>,
+    file: InstanceType<(typeof File)['service']>,
+    fulfillment: InstanceType<(typeof Fulfillment)['service']>,
+    notification: InstanceType<(typeof Notification)['service']>
   }
 }
