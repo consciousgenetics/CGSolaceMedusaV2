@@ -1,74 +1,95 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("@medusajs/framework/utils");
-(0, utils_1.loadEnv)(process.env.NODE_ENV || 'development', process.cwd());
-module.exports = (0, utils_1.defineConfig)({
+const utils_1 = require("@medusajs/utils");
+const constants_1 = require("./src/lib/constants");
+// import { MARKETPLACE_MODULE } from 'modules/marketplace';
+(0, utils_1.loadEnv)(process.env.NODE_ENV, process.cwd());
+const isDevelopment = process.env.NODE_ENV === 'development';
+const fileModule = {
+    key: utils_1.Modules.FILE,
+    resolve: '@medusajs/file',
+    id: 's3',
+    options: {
+        providers: [
+            {
+                resolve: `@medusajs/file-s3`,
+                options: {
+                    s3_url: process.env.S3_FILE_URL,
+                    bucket: process.env.S3_BUCKET,
+                    region: process.env.S3_REGION,
+                    access_key_id: process.env.S3_ACCESS_KEY_ID,
+                    secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+                    cache_control: process.env.S3_CACHE_CONTROL,
+                    access: process.env.S3_ACCESS,
+                    file_url: process.env.S3_FILE_URL,
+                    endpoint: process.env.S3_ENDPOINT,
+                    force_path_style: true,
+                    s3_force_path_style: true,
+                    signature_version: 'v4',
+                    max_attempts: 3,
+                    retry_delay: 1000,
+                    retry_delay_base: 1000,
+                    retry_delay_max: 10000,
+                },
+            },
+        ],
+    },
+};
+const medusaConfig = {
     projectConfig: {
-        databaseUrl: process.env.DATABASE_URL,
-        redisUrl: process.env.REDIS_URL,
+        databaseUrl: constants_1.DATABASE_URL,
+        databaseLogging: false,
+        redisUrl: constants_1.REDIS_URL,
+        workerMode: constants_1.WORKER_MODE,
         http: {
-            storeCors: process.env.STORE_CORS,
-            adminCors: process.env.ADMIN_CORS,
-            authCors: process.env.AUTH_CORS,
-            jwtSecret: process.env.JWT_SECRET || "supersecret",
-            cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+            adminCors: constants_1.ADMIN_CORS,
+            authCors: constants_1.AUTH_CORS,
+            storeCors: constants_1.STORE_CORS,
+            jwtSecret: constants_1.JWT_SECRET,
+            cookieSecret: constants_1.COOKIE_SECRET
         }
     },
-    /* modules: {
-       eventBus: {
-         resolve: "@medusajs/event-bus-redis",
-         options: {
-           redisUrl: process.env.REDIS_URL
-         }
-       },
-       cacheService: {
-         resolve: "@medusajs/cache-redis",
-         options: {
-           redisUrl: process.env.REDIS_URL
-         }
-       }
-   
-     },*/
+    admin: {
+        backendUrl: constants_1.BACKEND_URL,
+        disable: constants_1.SHOULD_DISABLE_ADMIN,
+    },
     modules: [
-        {
-            resolve: "@medusajs/medusa/notification",
-            options: {
-              providers: [
-                // ...
-                {
-                  resolve: "@medusajs/medusa/notification-sendgrid",
-                  id: "sendgrid",
-                  options: {
-                    channels: ["email"],
-                    api_key: process.env.SENDGRID_API_KEY,
-                    from: process.env.SENDGRID_FROM,
-                  },
-                },
-              ],
+        fileModule,
+        ...(constants_1.REDIS_URL ? [{
+                key: utils_1.Modules.EVENT_BUS,
+                resolve: '@medusajs/event-bus-redis',
+                options: {
+                    redisUrl: constants_1.REDIS_URL
+                }
             },
-          },
+            {
+                key: utils_1.Modules.WORKFLOW_ENGINE,
+                resolve: '@medusajs/workflow-engine-redis',
+                options: {
+                    redis: {
+                        url: constants_1.REDIS_URL,
+                    }
+                }
+            }] : []),
         {
-            resolve: "@medusajs/medusa/file",
+            key: utils_1.Modules.NOTIFICATION,
+            resolve: '@medusajs/notification',
             options: {
                 providers: [
                     {
-                        resolve: "@medusajs/file-s3",
+                        resolve: "@medusajs/medusa/notification-sendgrid",
+                        id: "sendgrid",
                         options: {
-                            file_url: process.env.S3_FILE_URL,
-                            access_key_id: process.env.S3_ACCESS_KEY_ID,
-                            secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
-                            region: process.env.S3_REGION,
-                            bucket: process.env.S3_BUCKET,
-                            endpoint: process.env.S3_ENDPOINT,
-                        }
-                    }
-                ],
+                            channels: ["email"],
+                            api_key: process.env.SENDGRID_API_KEY,
+                            from: process.env.SENDGRID_FROM,
+                        },
+                    },
+                ]
             }
-        }
+        },
     ],
-    admin: {
-        backendUrl: process.env.MEDUSA_BACKEND_URL,
-    },
-
-});
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibWVkdXNhLWNvbmZpZy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL21lZHVzYS1jb25maWcudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxxREFBaUU7QUFFakUsSUFBQSxlQUFPLEVBQUMsT0FBTyxDQUFDLEdBQUcsQ0FBQyxRQUFRLElBQUksYUFBYSxFQUFFLE9BQU8sQ0FBQyxHQUFHLEVBQUUsQ0FBQyxDQUFBO0FBRTdELE1BQU0sQ0FBQyxPQUFPLEdBQUcsSUFBQSxvQkFBWSxFQUFDO0lBQzVCLGFBQWEsRUFBRTtRQUNiLFdBQVcsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLFlBQVk7UUFDckMsUUFBUSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsU0FBUztRQUMvQixJQUFJLEVBQUU7WUFDSixTQUFTLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxVQUFXO1lBQ2xDLFNBQVMsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLFVBQVc7WUFDbEMsUUFBUSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsU0FBVTtZQUNoQyxTQUFTLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxVQUFVLElBQUksYUFBYTtZQUNsRCxZQUFZLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxhQUFhLElBQUksYUFBYTtTQUN6RDtLQUNGO0lBRUY7Ozs7Ozs7Ozs7Ozs7O1NBY0s7SUFFSixPQUFPLEVBQUU7UUFDUDtZQUNFLE9BQU8sRUFBRSx3QkFBd0I7WUFDakMsT0FBTyxFQUFFO2dCQUNQLE9BQU8sRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQjtnQkFDckMsSUFBSSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsYUFBYTtnQkFDL0IscUJBQXFCLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyx3QkFBd0I7Z0JBQzNELHVCQUF1QixFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsMEJBQTBCO2dCQUMvRCxzQkFBc0IsRUFBRSxPQUFPLENBQUMsR0FB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
+};
+console.log(JSON.stringify(medusaConfig, null, 2));
+exports.default = (0, utils_1.defineConfig)(medusaConfig);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibWVkdXNhLWNvbmZpZy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL21lZHVzYS1jb25maWcuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSwyQ0FBaUU7QUFDakUsbURBdUI2QjtBQUM3Qiw0REFBNEQ7QUFFNUQsSUFBQSxlQUFPLEVBQUMsT0FBTyxDQUFDLEdBQUcsQ0FBQyxRQUFRLEVBQUUsT0FBTyxDQUFDLEdBQUcsRUFBRSxDQUFDLENBQUM7QUFFN0MsTUFBTSxhQUFhLEdBQUcsT0FBTyxDQUFDLEdBQUcsQ0FBQyxRQUFRLEtBQUssYUFBYSxDQUFDO0FBRTdELE1BQU0sVUFBVSxHQUFHO0lBQ2pCLEdBQUcsRUFBRSxlQUFPLENBQUMsSUFBSTtJQUNqQixPQUFPLEVBQUUsZ0JBQWdCO0lBQ3pCLEVBQUUsRUFBRSxJQUFJO0lBQ1IsT0FBTyxFQUFFO1FBQ1AsU0FBUyxFQUFFO1lBQ1Q7Z0JBQ0UsT0FBTyxFQUFFLG1CQUFtQjtnQkFDNUIsT0FBTyxFQUFFO29CQUNQLE1BQU0sRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLFdBQVc7b0JBQy9CLE1BQU0sRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLFNBQVM7b0JBQzdCLE1BQU0sRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLFNBQVM7b0JBQzdCLGFBQWEsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQjtvQkFDM0MsaUJBQWlCLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxvQkFBb0I7b0JBQ25ELGFBQWEsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQjtvQkFDM0MsTUFBTSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsU0FBUztvQkFDN0IsUUFBUSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsV0FBVztvQkFDakMsUUFBUSxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsV0FBVztvQkFDakMsZ0JBQWdCLEVBQUUsSUFBSTtvQkFDdEIsbUJBQW1CLEVBQUUsSUFBSTtvQkFDekIsaUJBQWlCLEVBQUUsSUFBSTtvQkFDdkIsWUFBWSxFQUFFLENBQUM7b0JBQ2YsV0FBVyxFQUFFLElBQUk7b0JBQ2pCLGdCQUFnQixFQUFFLElBQUk7b0JBQ3RCLGVBQWUsRUFBRSxLQUFLO2lCQUN2QjthQUNGO1NBQ0Y7S0FDRjtDQUNGLENBQUM7QUFFRixNQUFNLFlBQVksR0FBRztJQUNuQixhQUFhLEVBQUU7UUFDYixXQUFXLEVBQUUsd0JBQVk7UUFDekIsZUFBZSxFQUFFLEtBQUs7UUFDdEIsUUFBUSxFQUFFLHFCQUFTO1FBQ25CLFVBQVUsRUFBRSx1QkFBVztRQUN2QixJQUFJLEVBQUU7WUFDSixTQUFTLEVBQUUsc0JBQVU7WUFDckIsUUFBUSxFQUFFLHFCQUFTO1lBQ25CLFNBQVMsRUFBRSxzQkFBVTtZQUNyQixTQUFTLEVBQUUsc0JBQVU7WUFDckIsWUFBWSxFQUFFLHlCQUFhO1NBQzVCO0tBQ0Y7SUFDRCxLQUFLLEVBQUU7UUFDTCxVQUFVLEVBQUUsdUJBQVc7UUFDdkIsT0FBTyxFQUFFLGdDQUFvQjtLQUM5QjtJQUNELE9BQU8sRUFBRTtRQUNQLFVBQVU7UUFDVixHQUFHLENBQUMscUJBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQztnQkFDZixHQUFHLEVBQUUsZUFBTyxDQUFDLFNBQVM7Z0JBQ3RCLE9BQU8sRUFBRSwyQkFBMkI7Z0JBQ3BDLE9BQU8sRUFBRTtvQkFDUCxRQUFRLEVBQUUscUJBQVM7aUJBQ3BCO2FBQ0Y7WUFDRDtnQkFDRSxHQUFHLEVBQUUsZUFBTyxDQUFDLGVBQWU7Z0JBQzVCLE9BQU8sRUFBRSxpQ0FBaUM7Z0JBQzFDLE9BQU8sRUFBRTtvQkFDUCxLQUFLLEVBQUU7d0JBQ0wsR0FBRyxFQUFFLHFCQUFTO3FCQUNmO2lCQUNGO2FBQ0YsQ0FBQyxDQUFDLENBQUMsQ0FBQyxFQUFFLENBQUM7UUFDTjtZQUNBLEdBQUcsRUFBRSxlQUFPLENBQUMsWUFBWTtZQUN6QixPQUFPLEVBQUUsd0JBQXdCO1lBQ2pDLE9BQU8sRUFBRTtnQkFDUCxTQUFTLEVBQUU7b0JBQ1Q7d0JBQ0UsT0FBTyxFQUFFLHdDQUF3Qzt3QkFDakQsRUFBRSxFQUFFLFVBQVU7d0JBQ2QsT0FBTyxFQUFFOzRCQUNQLFFBQVEsRUFBRSxDQUFDLE9BQU8sQ0FBQzs0QkFDbkIsT0FBTyxFQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsZ0JBQWdCOzRCQUNyQyxJQUFJLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxhQUFhO3lCQUNoQztxQkFDRjtpQkFFRjthQUNGO1NBQ0Y7S0FDRjtDQUNGLENBQUM7QUFFRixPQUFPLENBQUMsR0FBRyxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsWUFBWSxFQUFFLElBQUksRUFBRSxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ25ELGtCQUFlLElBQUEsb0JBQVksRUFBQyxZQUFZLENBQUMsQ0FBQyJ9

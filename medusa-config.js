@@ -29,52 +29,36 @@ loadEnv(process.env.NODE_ENV, process.cwd());
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-
-const fileModule = isDevelopment
-  ? {
-      resolve: '@medusajs/medusa/file',
-      options: {
-        providers: [
-          {
-            resolve: '@medusajs/medusa/file-local',
-            id: 'local',
-            options: {
-              // Add specific provider options here for the local setup
-            },
-          },
-        ],
+const fileModule = {
+  key: Modules.FILE,
+  resolve: '@medusajs/file',
+  id: 's3',
+  options: {
+    providers: [
+      {
+        resolve: `@medusajs/file-s3`,
+        options: {
+          s3_url: process.env.S3_FILE_URL,
+          bucket: process.env.S3_BUCKET,
+          region: process.env.S3_REGION,
+          access_key_id: process.env.S3_ACCESS_KEY_ID,
+          secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+          cache_control: process.env.S3_CACHE_CONTROL,
+          access: process.env.S3_ACCESS,
+          file_url: process.env.S3_FILE_URL,
+          endpoint: process.env.S3_ENDPOINT,
+          force_path_style: true,
+          s3_force_path_style: true,
+          signature_version: 'v4',
+          max_attempts: 3,
+          retry_delay: 1000,
+          retry_delay_base: 1000,
+          retry_delay_max: 10000,
+        },
       },
-    }
-  : {
-      key: Modules.FILE,
-      resolve: '@medusajs/file',
-      id: 's3',
-      options: {
-        providers: [
-          {
-            resolve: `@medusajs/file-s3`,
-            options: {
-              s3_url: process.env.S3_FILE_URL,
-              bucket: process.env.S3_BUCKET,
-              region: process.env.S3_REGION,
-              access_key_id: process.env.S3_ACCESS_KEY_ID,
-              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
-              cache_control: process.env.S3_CACHE_CONTROL,
-              access: process.env.S3_ACCESS,
-              file_url: process.env.S3_FILE_URL,
-              endpoint: process.env.S3_ENDPOINT,
-              force_path_style: true,
-              s3_force_path_style: true,
-              signature_version: 'v4',
-              max_attempts: 3,
-              retry_delay: 1000,
-              retry_delay_base: 1000,
-              retry_delay_max: 10000,
-            },
-          },
-        ],
-      },
-    };
+    ],
+  },
+};
 
 const medusaConfig = {
   projectConfig: {
