@@ -102,7 +102,7 @@ const medusaConfig = {
       options: {
         providers: [
           {
-            resolve: "@medusajs/medusa/notification-sendgrid",
+            resolve: "@medusajs/notification-sendgrid",
             id: "sendgrid",
             options: {
               channels: ["email"],

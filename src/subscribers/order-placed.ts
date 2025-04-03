@@ -8,10 +8,54 @@ import axios from 'axios'
 const PUBLISHABLE_API_KEY = 'pk_c3c8c1abbad751cfb6af3bb255ccdff31133489617e2164a8dad770c7e9f8c8c'
 
 export default async function orderPlacedHandler({
-  event: { data },
+  event,
   container,
 }: SubscriberArgs<any>) {
   try {
+    // Check which event was triggered
+    if (event.name === 'LinkOrderCart.attached') {
+      console.log('Cart attached to order:', event.data)
+      
+      // This event indicates that a cart has been attached to an order
+      // You can add custom logic here if needed
+      // The event.data will typically contain link information with both cart_id and order_id
+      
+      // Optionally log the details
+      console.log('LinkOrderCart.attached event handled successfully')
+      return
+    }
+    
+    if (event.name === 'LinkOrderPaymentCollection.attached') {
+      console.log('Payment collection attached to order:', event.data)
+      
+      // Use the notification module directly
+      const notificationModuleService = container.resolve(Modules.NOTIFICATION)
+      
+      const linkData = event.data;
+      
+      // The order_id and payment_collection_id should be present in the link data
+      if (linkData.order_id) {
+        console.log(`Order ID from link data: ${linkData.order_id}`);
+        
+        try {
+          // For now, just log a message that this event was processed
+          console.log('Payment collection successfully attached to order, no email sent at this stage');
+          
+          // Note: We're not sending an email here to avoid duplication, since
+          // the order.placed event will already trigger an email
+        } catch (error) {
+          console.error('Error processing payment collection attachment:', error);
+        }
+      } else {
+        console.error('No order ID found in link data');
+      }
+      
+      return
+    }
+    
+    // The rest of the function handles the order.placed event
+    const { data } = event
+    console.log('IMPORTANT - Event name:', event.name)
     console.log('Order placed handler started with data:', JSON.stringify(data || {}, null, 2))
     
     if (!data || !data.id) {
@@ -103,6 +147,18 @@ export default async function orderPlacedHandler({
     }
     
     try {
+      console.log('Attempting to send order confirmation email to:', order.email);
+      console.log('Using template ID:', process.env.SENDGRID_ORDER_PLACED_ID);
+      console.log('SendGrid API Key available:', !!process.env.SENDGRID_API_KEY);
+      console.log('SendGrid FROM address:', process.env.SENDGRID_FROM);
+      
+      // Let's inspect the notification module service
+      console.log('Notification module service available:', !!notificationModuleService);
+      if (notificationModuleService) {
+        console.log('Notification module service methods:', 
+          Object.getOwnPropertyNames(Object.getPrototypeOf(notificationModuleService)));
+      }
+      
       await notificationModuleService.createNotifications({
         to: order.email,
         channel: 'email',
@@ -115,12 +171,47 @@ export default async function orderPlacedHandler({
           },
           order: enrichedOrder,
           shippingAddress,
-          preview: 'Thank you for your order!'
+          preview: 'Thank you for your order!',
+          uniqueId: `order_${order.id}_${Date.now()}`
         }
       })
       console.log('Order confirmation email sent successfully')
     } catch (error) {
       console.error('Error sending order confirmation notification:', error)
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
+      try {
+        console.log('Attempting alternative approach for returning customer');
+        
+        const uniqueEmail = `${order.email.split('@')[0]}+order${order.id}@${order.email.split('@')[1]}`;
+        console.log(`Using alternative email format: ${uniqueEmail}`);
+        
+        await notificationModuleService.createNotifications({
+          to: uniqueEmail,
+          channel: 'email',
+          template: process.env.SENDGRID_ORDER_PLACED_ID,
+          data: {
+            emailOptions: {
+              from: process.env.SENDGRID_FROM,
+              replyTo: 'info@example.com',
+              subject: 'Your order has been placed',
+            },
+            order: enrichedOrder,
+            shippingAddress,
+            preview: 'Thank you for your order!',
+            uniqueId: `order_${order.id}_${Date.now()}_alt`
+          }
+        })
+        console.log('Alternative email sent successfully');
+      } catch (altError) {
+        console.error('Alternative approach also failed:', altError);
+      }
     }
   } catch (error) {
     console.error('Unhandled error in order-placed handler:', error)
@@ -128,5 +219,5 @@ export default async function orderPlacedHandler({
 }
 
 export const config: SubscriberConfig = {
-  event: 'order.placed'
+  event: ['order.placed', 'LinkOrderPaymentCollection.attached', 'LinkOrderCart.attached']
 }
