@@ -19,6 +19,54 @@ if (process.env.SENDGRID_API_KEY) {
   console.error('❌ Customer notifier: SENDGRID_API_KEY is not set!')
 }
 
+// Fetch order data with retry mechanism
+async function fetchOrderWithRetry(baseUrl, orderId, retry = 3, delay = 2000) {
+  const publishableKey = PUBLISHABLE_API_KEY
+  const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET
+  
+  for (let attempt = 1; attempt <= retry; attempt++) {
+    try {
+      console.log(`🔍 Customer notifier: Fetching order via store API (attempt ${attempt}/${retry}): ${orderId}`)
+      const response = await axios.get(
+        `${baseUrl}/store/orders/${orderId}`, 
+        {
+          headers: {
+            'x-publishable-api-key': publishableKey
+          }
+        }
+      )
+      console.log('✅ Customer notifier: Order fetched successfully via store API')
+      return response.data.order
+    } catch (storeErr) {
+      console.error(`❌ Customer notifier: Store API failed (attempt ${attempt}/${retry}):`, storeErr.message)
+      
+      // If this is the last store API attempt, try admin API
+      if (attempt === retry) {
+        try {
+          console.log(`🔍 Customer notifier: Fetching order via admin API: ${orderId}`)
+          const response = await axios.get(
+            `${baseUrl}/admin/orders/${orderId}`,
+            {
+              headers: {
+                'x-medusa-access-token': apiToken
+              }
+            }
+          )
+          console.log('✅ Customer notifier: Order fetched successfully via admin API')
+          return response.data.order
+        } catch (adminErr) {
+          console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
+          throw new Error('Both API methods failed')
+        }
+      }
+      
+      // Wait before retrying
+      console.log(`🔄 Customer notifier: Waiting ${delay/1000}s before retry...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+}
+
 export default async function orderPlacedHandler({
   event,
   container,
@@ -44,74 +92,70 @@ export default async function orderPlacedHandler({
     // Use the notification module directly
     const notificationModuleService = container.resolve(Modules.NOTIFICATION)
     const baseUrl = process.env.BACKEND_URL || 'http://localhost:9000'
-    const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET
     
     // For order.placed events, use the order ID directly
     const orderId = data.id
     
-    // Fetch order data
+    // Fetch order data with retries
     let order
     try {
-      console.log('🔍 Customer notifier: Fetching order via store API:', orderId)
-      // Use the store API with the provided publishable key
-      try {
-        const response = await axios.get(
-          `${baseUrl}/store/orders/${orderId}`, 
-          {
-            headers: {
-              'x-publishable-api-key': PUBLISHABLE_API_KEY
-            }
-          }
-        )
-        order = response.data.order
-        console.log('✅ Customer notifier: Order fetched successfully via store API')
-      } catch (storeErr) {
-        console.error('❌ Customer notifier: Store API failed:', storeErr.message)
-        
-        // If store API still fails, try admin API as fallback
-        console.log('🔄 Customer notifier: Falling back to admin API...')
+      order = await fetchOrderWithRetry(baseUrl, orderId)
+    } catch (err) {
+      console.error('❌ Customer notifier: All API attempts failed, using fallback:', err.message)
+      
+      // Last resort - use the order data from the event if available
+      if (data.email && data.items) {
+        console.log('🔄 Customer notifier: Using order data from event as fallback')
+        order = data
+      } else if (data.result && data.result.order) {
+        console.log('🔄 Customer notifier: Using order data from cart completion result')
+        order = data.result.order
+      } else {
+        // Wait a bit longer before giving up completely - the order may still be processing
+        console.log('🕒 Customer notifier: Waiting 5s for order to be fully processed...')
+        await new Promise(resolve => setTimeout(resolve, 5000))
         
         try {
-          console.log('🔍 Customer notifier: Fetching order via admin API:', orderId)
-          const response = await axios.get(
-            `${baseUrl}/admin/orders/${orderId}`,
-            {
-              headers: {
-                'x-medusa-access-token': apiToken
-              }
-            }
-          )
-          order = response.data.order
-          console.log('✅ Customer notifier: Order fetched successfully via admin API')
-        } catch (adminErr) {
-          console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
-          
-          // Last resort - use the order data from the event if available
-          if (data.email && data.items) {
-            console.log('🔄 Customer notifier: Using order data from event as fallback')
-            order = data
-          } else if (data.result && data.result.order) {
-            console.log('🔄 Customer notifier: Using order data from cart completion result')
-            order = data.result.order
-          } else {
-            // If both API calls fail and we only have an order ID, create a minimal order object
-            console.log('🔄 Customer notifier: Creating minimal order object from ID')
-            order = {
-              id: orderId,
-              // Create a generic email for testing purposes
-              email: `order-${orderId}@example.com`,
-              ...data // Include any other data from the event
-            }
+          // One final attempt after waiting
+          order = await fetchOrderWithRetry(baseUrl, orderId, 1)
+        } catch (finalErr) {
+          // If all failed, create a minimal order object for logging purposes
+          console.log('🔄 Customer notifier: Creating minimal order object from ID')
+          order = {
+            id: orderId,
+            email: process.env.ADMIN_EMAIL || 'info@consciousgenetics.com', // Send to admin as fallback
+            ...data // Include any other data from the event
           }
         }
       }
-    } catch (err) {
-      console.error('❌ Customer notifier: Error fetching order via API:', err.message)
-      return
     }
     
     if (!order) {
       console.error('❌ Customer notifier: Order not found or could not be retrieved')
+      return
+    }
+    
+    // Don't proceed if we still don't have essential data
+    if (!order.total || !order.subtotal) {
+      console.error('❌ Customer notifier: Critical order data missing, cannot format email')
+      
+      // Only proceed with admin notification about the issue
+      try {
+        const msg = {
+          to: ADMIN_EMAIL,
+          from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
+          subject: `⚠️ Order Processing Issue: #${order.display_id || order.id}`,
+          text: `An order (${order.id}) was placed but the system couldn't retrieve complete details. Manual follow-up required.`
+        };
+        
+        if (process.env.SENDGRID_API_KEY) {
+          await sgMail.send(msg);
+          console.log('✅ Admin alert sent about order data issue')
+        }
+      } catch (alertErr) {
+        console.error('❌ Failed to send admin alert:', alertErr)
+      }
+      
       return
     }
     
