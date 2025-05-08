@@ -36,7 +36,7 @@ async function fetchOrderWithRetry(baseUrl, orderId, retry = 3, delay = 2000) {
         }
       )
       console.log('✅ Customer notifier: Order fetched successfully via store API')
-      return response.data.order
+      return (response.data as { order: any }).order
     } catch (storeErr) {
       console.error(`❌ Customer notifier: Store API failed (attempt ${attempt}/${retry}):`, storeErr.message)
       
@@ -53,7 +53,7 @@ async function fetchOrderWithRetry(baseUrl, orderId, retry = 3, delay = 2000) {
             }
           )
           console.log('✅ Customer notifier: Order fetched successfully via admin API')
-          return response.data.order
+          return (response.data as { order: any }).order
         } catch (adminErr) {
           console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
           throw new Error('Both API methods failed')
@@ -95,6 +95,7 @@ export default async function orderPlacedHandler({
     
     // For order.placed events, use the order ID directly
     const orderId = data.id
+    const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET
     
     // Fetch order data with retries
     let order
@@ -110,7 +111,7 @@ export default async function orderPlacedHandler({
             }
           }
         )
-        order = response.data.order
+        order = (response.data as { order: any }).order
         console.log('✅ Customer notifier: Order fetched successfully via store API')
       } catch (storeErr) {
         console.error('❌ Customer notifier: Store API failed:', storeErr.message)
@@ -128,7 +129,7 @@ export default async function orderPlacedHandler({
               }
             }
           )
-          order = response.data.order
+          order = (response.data as { order: any }).order
           console.log('✅ Customer notifier: Order fetched successfully via admin API')
         } catch (adminErr) {
           console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
@@ -152,6 +153,9 @@ export default async function orderPlacedHandler({
           }
         }
       }
+    } catch (err) {
+      console.error('❌ Customer notifier: Error fetching order via API:', err.message)
+      return
     }
     
     if (!order) {
