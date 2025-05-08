@@ -11,84 +11,83 @@ const axios_1 = __importDefault(require("axios"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
 // The known publishable API key
 const PUBLISHABLE_API_KEY = 'pk_c3c8c1abbad751cfb6af3bb255ccdff31133489617e2164a8dad770c7e9f8c8c';
+// Admin email address
+const ADMIN_EMAIL = 'info@consciousgenetics.com';
 // Initialize SendGrid
 if (process.env.SENDGRID_API_KEY) {
     mail_1.default.setApiKey(process.env.SENDGRID_API_KEY);
+    console.log('💌 Customer notifier: SendGrid initialized');
+}
+else {
+    console.error('❌ Customer notifier: SENDGRID_API_KEY is not set!');
 }
 async function orderPlacedHandler({ event, container, }) {
-    var _a;
     try {
-        console.log('Event received:', event.name);
-        // Check which event was triggered
-        if (event.name === 'LinkCartPaymentCollection.attached') {
-            console.log('Cart payment collection attached:', event.data);
-            // This event is triggered when a payment collection is linked to a cart
-            // We don't need to send an email for this event
+        console.log('🔔 Customer notifier received event:', event.name);
+        // Only process order.placed events - we're now using the event-bridge to convert LinkOrderCart events
+        if (event.name !== 'order.placed') {
+            console.log(`Customer notifier ignoring event ${event.name}`);
             return;
         }
-        if (event.name === 'LinkOrderCart.attached') {
-            console.log('Cart attached to order:', event.data);
-            // This event is triggered when a cart is linked to an order
-            // We don't need to send an email for this event
-            return;
-        }
-        if (event.name === 'LinkOrderPaymentCollection.attached') {
-            console.log('Payment collection attached to order:', event.data);
-            // This event is triggered when a payment collection is linked to an order
-            // We don't need to send an email for this event
-            return;
-        }
-        // If we get here, it's the order.placed event
+        // Extract data from the event
         const { data } = event;
-        console.log('Order placed handler started with data:', JSON.stringify(data || {}, null, 2));
+        console.log('Customer notifier processing order event:', JSON.stringify(data || {}, null, 2));
         if (!data || !data.id) {
-            console.error('Invalid order data received in order-placed handler');
+            console.error('❌ Customer notifier: Invalid data received');
             return;
         }
         // Use the notification module directly
         const notificationModuleService = container.resolve(utils_1.Modules.NOTIFICATION);
-        // Fetch order data from the store API with the known publishable API key
+        const baseUrl = process.env.BACKEND_URL || 'http://localhost:9000';
+        const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET;
+        // For order.placed events, use the order ID directly
+        const orderId = data.id;
+        // Fetch order data
         let order;
         try {
-            const baseUrl = process.env.BACKEND_URL || 'http://localhost:9000';
+            console.log('🔍 Customer notifier: Fetching order via store API:', orderId);
             // Use the store API with the provided publishable key
             try {
-                const response = await axios_1.default.get(`${baseUrl}/store/orders/${data.id}`, {
+                const response = await axios_1.default.get(`${baseUrl}/store/orders/${orderId}`, {
                     headers: {
                         'x-publishable-api-key': PUBLISHABLE_API_KEY
                     }
                 });
                 order = response.data.order;
-                console.log('Order fetched successfully via store API');
+                console.log('✅ Customer notifier: Order fetched successfully via store API');
             }
             catch (storeErr) {
-                console.error('Store API failed:', storeErr.message);
+                console.error('❌ Customer notifier: Store API failed:', storeErr.message);
                 // If store API still fails, try admin API as fallback
-                console.log('Falling back to admin API...');
+                console.log('🔄 Customer notifier: Falling back to admin API...');
                 try {
-                    const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET;
-                    const response = await axios_1.default.get(`${baseUrl}/admin/orders/${data.id}`, {
+                    console.log('🔍 Customer notifier: Fetching order via admin API:', orderId);
+                    const response = await axios_1.default.get(`${baseUrl}/admin/orders/${orderId}`, {
                         headers: {
                             'x-medusa-access-token': apiToken
                         }
                     });
                     order = response.data.order;
-                    console.log('Order fetched successfully via admin API');
+                    console.log('✅ Customer notifier: Order fetched successfully via admin API');
                 }
                 catch (adminErr) {
-                    console.error('Admin API failed:', adminErr.message);
+                    console.error('❌ Customer notifier: Admin API failed:', adminErr.message);
                     // Last resort - use the order data from the event if available
                     if (data.email && data.items) {
-                        console.log('Using order data from event as fallback');
+                        console.log('🔄 Customer notifier: Using order data from event as fallback');
                         order = data;
+                    }
+                    else if (data.result && data.result.order) {
+                        console.log('🔄 Customer notifier: Using order data from cart completion result');
+                        order = data.result.order;
                     }
                     else {
                         // If both API calls fail and we only have an order ID, create a minimal order object
-                        console.log('Creating minimal order object from ID');
+                        console.log('🔄 Customer notifier: Creating minimal order object from ID');
                         order = {
-                            id: data.id,
+                            id: orderId,
                             // Create a generic email for testing purposes
-                            email: `order-${data.id}@example.com`,
+                            email: `order-${orderId}@example.com`,
                             ...data // Include any other data from the event
                         };
                     }
@@ -96,41 +95,45 @@ async function orderPlacedHandler({ event, container, }) {
             }
         }
         catch (err) {
-            console.error('Error fetching order via API:', err.message);
+            console.error('❌ Customer notifier: Error fetching order via API:', err.message);
             return;
         }
         if (!order) {
-            console.error('Order not found or could not be retrieved');
+            console.error('❌ Customer notifier: Order not found or could not be retrieved');
             return;
         }
-        console.log("Order retrieved successfully, analyzing structure:", `ID: ${order.id}, ` +
-            `Has items: ${!!(order.items && order.items.length)}, ` +
-            `Item count: ${((_a = order.items) === null || _a === void 0 ? void 0 : _a.length) || 0}, ` +
-            `Has shipping address: ${!!order.shipping_address}, ` +
-            `Email: ${order.email}`);
+        console.log("Customer notifier: Order retrieved successfully:", `ID: ${order.id}, ` +
+            `Customer: ${order.email}, ` +
+            `Total: ${order.total}`);
         // Use the order data directly
         const shippingAddress = order.shipping_address || {};
-        console.log('ORDER VALUES FROM API:', {
+        // Log original price values for debugging
+        console.log('💰 Customer notifier: Original price values:', {
             subtotal: order.subtotal,
             tax_total: order.tax_total,
             shipping_total: order.shipping_total,
             discount_total: order.discount_total,
             total: order.total
         });
-        // Create enriched order object using original values
-        const enrichedOrder = {
-            ...order
-        };
+        // Format the order for the template
+        const formattedOrder = formatOrderForTemplate(order);
+        // Log formatted price values
+        console.log('💵 Customer notifier: Formatted price values:', {
+            subtotal: formattedOrder.subtotal,
+            tax_total: formattedOrder.tax_total,
+            shipping_total: formattedOrder.shipping_total,
+            discount_total: formattedOrder.discount_total,
+            total: formattedOrder.total
+        });
         // Only proceed if we have a valid email
         if (!order.email) {
-            console.error('Order is missing email address');
+            console.error('❌ Customer notifier: Order is missing email address');
             return;
         }
         try {
-            console.log('Attempting to send email to:', order.email);
-            console.log('Using template ID:', process.env.SENDGRID_ORDER_PLACED_ID);
-            console.log('SendGrid FROM address:', process.env.SENDGRID_FROM);
-            // First try using Medusa's notification module
+            console.log('📧 Customer notifier: Sending email to:', order.email);
+            console.log('📄 Customer notifier: Using template ID:', process.env.SENDGRID_ORDER_PLACED_ID);
+            // First try using Medusa's notification module for customer email
             try {
                 await notificationModuleService.createNotifications({
                     to: order.email,
@@ -138,41 +141,41 @@ async function orderPlacedHandler({ event, container, }) {
                     template: process.env.SENDGRID_ORDER_PLACED_ID,
                     data: {
                         emailOptions: {
-                            from: process.env.SENDGRID_FROM,
-                            replyTo: 'info@example.com',
+                            from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
+                            replyTo: 'info@consciousgenetics.com',
                             subject: 'Your order has been placed'
                         },
-                        order: enrichedOrder,
+                        order: formattedOrder,
                         shippingAddress,
                         preview: 'Thank you for your order!'
                     }
                 });
-                console.log('Order confirmation email sent successfully via Medusa notification module');
+                console.log('✅ Customer notifier: Email sent successfully via Medusa notification module');
             }
             catch (medusaError) {
-                console.error('Error sending via Medusa notification module:', medusaError);
+                console.error('❌ Customer notifier: Error sending via Medusa module:', medusaError);
                 // If Medusa's notification fails, try sending directly via SendGrid
-                console.log('Falling back to direct SendGrid API...');
-                // Use SendGrid directly as a fallback
+                console.log('🔄 Customer notifier: Falling back to direct SendGrid API...');
+                // Use SendGrid directly as a fallback for customer
                 const msg = {
                     to: order.email,
                     from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
                     templateId: process.env.SENDGRID_ORDER_PLACED_ID,
                     dynamicTemplateData: {
-                        order: enrichedOrder,
+                        order: formattedOrder,
                         shippingAddress,
                         preview: 'Thank you for your order!'
                     }
                 };
                 await mail_1.default.send(msg);
-                console.log('Order confirmation email sent successfully via direct SendGrid API');
+                console.log('✅ Customer notifier: Email sent successfully via direct SendGrid API');
             }
         }
         catch (error) {
-            console.error('All email sending attempts failed:', error);
+            console.error('❌ Customer notifier: All email sending attempts failed:', error);
             // Log detailed error information
             if (error instanceof Error) {
-                console.error('Error details:', {
+                console.error('❌ Customer notifier: Error details:', {
                     name: error.name,
                     message: error.message,
                     stack: error.stack
@@ -181,10 +184,57 @@ async function orderPlacedHandler({ event, container, }) {
         }
     }
     catch (error) {
-        console.error('Unhandled error in order-placed handler:', error);
+        console.error('❌ Customer notifier: Unhandled error:', error);
     }
 }
+/**
+ * Format monetary values properly from cents to dollars/pounds
+ */
+function formatMoney(value) {
+    if (value === null || value === undefined) {
+        return "0.00";
+    }
+    // Make sure we're working with a number
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    // Check if the value is already in dollars/pounds format
+    // If the value is small (e.g., 10.98 instead of 1098), assume it's already formatted
+    if (numValue < 100 && numValue % 1 !== 0) {
+        // Value is likely already in dollars/pounds format (has decimals and is small)
+        return numValue.toFixed(2);
+    }
+    else {
+        // Value is likely in cents, convert to dollars/pounds
+        return (numValue / 100).toFixed(2);
+    }
+}
+/**
+ * Format the order object for the email template
+ */
+function formatOrderForTemplate(order) {
+    // Format the order items
+    const formattedItems = order.items ? order.items.map(item => {
+        var _a;
+        return ({
+            ...item,
+            unit_price: formatMoney(item.unit_price),
+            title: item.title || (((_a = item.variant) === null || _a === void 0 ? void 0 : _a.title) || ''),
+            variant: item.variant || {}
+        });
+    }) : [];
+    // Return the formatted order object
+    return {
+        ...order,
+        display_id: order.display_id || order.id,
+        total: formatMoney(order.total),
+        subtotal: formatMoney(order.subtotal),
+        tax_total: formatMoney(order.tax_total),
+        shipping_total: formatMoney(order.shipping_total),
+        discount_total: formatMoney(order.discount_total || 0),
+        items: formattedItems
+    };
+}
+// Now ONLY listen for order.placed events - the event-bridge will convert LinkOrderCart events
 exports.config = {
-    event: ['order.placed', 'LinkOrderCart.attached', 'LinkOrderPaymentCollection.attached', 'LinkCartPaymentCollection.attached']
+    event: ['order.placed']
 };
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib3JkZXItcGxhY2VkLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL3N1YnNjcmliZXJzL29yZGVyLXBsYWNlZC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7QUFnQkEscUNBaU1DO0FBak5ELHFEQUFtRDtBQUluRCxrREFBeUI7QUFDekIsMkJBQTJCO0FBQzNCLDBEQUFtQztBQUVuQyxnQ0FBZ0M7QUFDaEMsTUFBTSxtQkFBbUIsR0FBRyxxRUFBcUUsQ0FBQTtBQUVqRyxzQkFBc0I7QUFDdEIsSUFBSSxPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQixFQUFFLENBQUM7SUFDakMsY0FBTSxDQUFDLFNBQVMsQ0FBQyxPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQixDQUFDLENBQUE7QUFDaEQsQ0FBQztBQUVjLEtBQUssVUFBVSxrQkFBa0IsQ0FBQyxFQUMvQyxLQUFLLEVBQ0wsU0FBUyxHQUNXOztJQUNwQixJQUFJLENBQUM7UUFDSCxPQUFPLENBQUMsR0FBRyxDQUFDLGlCQUFpQixFQUFFLEtBQUssQ0FBQyxJQUFJLENBQUMsQ0FBQztRQUUzQyxrQ0FBa0M7UUFDbEMsSUFBSSxLQUFLLENBQUMsSUFBSSxLQUFLLG9DQUFvQyxFQUFFLENBQUM7WUFDeEQsT0FBTyxDQUFDLEdBQUcsQ0FBQyxtQ0FBbUMsRUFBRSxLQUFLLENBQUMsSUFBSSxDQUFDLENBQUM7WUFDN0Qsd0VBQXdFO1lBQ3hFLGdEQUFnRDtZQUNoRCxPQUFPO1FBQ1QsQ0FBQztRQUVELElBQUksS0FBSyxDQUFDLElBQUksS0FBSyx3QkFBd0IsRUFBRSxDQUFDO1lBQzVDLE9BQU8sQ0FBQyxHQUFHLENBQUMseUJBQXlCLEVBQUUsS0FBSyxDQUFDLElBQUksQ0FBQyxDQUFDO1lBQ25ELDREQUE0RDtZQUM1RCxnREFBZ0Q7WUFDaEQsT0FBTztRQUNULENBQUM7UUFFRCxJQUFJLEtBQUssQ0FBQyxJQUFJLEtBQUsscUNBQXFDLEVBQUUsQ0FBQztZQUN6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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib3JkZXItcGxhY2VkLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL3N1YnNjcmliZXJzL29yZGVyLXBsYWNlZC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7QUFxQkEscUNBNkxDO0FBbE5ELHFEQUFtRDtBQUluRCxrREFBeUI7QUFDekIsMkJBQTJCO0FBQzNCLDBEQUFtQztBQUVuQyxnQ0FBZ0M7QUFDaEMsTUFBTSxtQkFBbUIsR0FBRyxxRUFBcUUsQ0FBQTtBQUNqRyxzQkFBc0I7QUFDdEIsTUFBTSxXQUFXLEdBQUcsNEJBQTRCLENBQUE7QUFFaEQsc0JBQXNCO0FBQ3RCLElBQUksT0FBTyxDQUFDLEdBQUcsQ0FBQyxnQkFBZ0IsRUFBRSxDQUFDO0lBQ2pDLGNBQU0sQ0FBQyxTQUFTLENBQUMsT0FBTyxDQUFDLEdBQUcsQ0FBQyxnQkFBZ0IsQ0FBQyxDQUFBO0lBQzlDLE9BQU8sQ0FBQyxHQUFHLENBQUMsNENBQTRDLENBQUMsQ0FBQTtBQUMzRCxDQUFDO0tBQU0sQ0FBQztJQUNOLE9BQU8sQ0FBQyxLQUFLLENBQUMsbURBQW1ELENBQUMsQ0FBQTtBQUNwRSxDQUFDO0FBRWMsS0FBSyxVQUFVLGtCQUFrQixDQUFDLEVBQy9DLEtBQUssRUFDTCxTQUFTLEdBQ1c7SUFDcEIsSUFBSSxDQUFDO1FBQ0gsT0FBTyxDQUFDLEdBQUcsQ0FBQyxzQ0FBc0MsRUFBRSxLQUFLLENBQUMsSUFBSSxDQUFDLENBQUM7UUFFaEUsc0dBQXNHO1FBQ3RHLElBQUksS0FBSyxDQUFDLElBQUksS0FBSyxjQUFjLEVBQUUsQ0FBQztZQUNsQyxPQUFPLENBQUMsR0FBRyxDQUFDLG9DQUFvQyxLQUFLLENBQUMsSUFBSSxFQUFFLENBQUMsQ0FBQztZQUM5RCxPQUFPO1FBQ1QsQ0FBQztRQUVELDhCQUE4QjtRQUM5QixNQUFNLEVBQUUsSUFBSSxFQUFFLEdBQUcsS0FBSyxDQUFDO1FBQ3ZCLE9BQU8sQ0FBQyxHQUFHLENBQUMsMkNBQTJD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

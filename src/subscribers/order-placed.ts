@@ -63,7 +63,7 @@ export default async function orderPlacedHandler({
             }
           }
         )
-        order = response.data.order
+        order = (response.data as { order: any }).order
         console.log('✅ Customer notifier: Order fetched successfully via store API')
       } catch (storeErr) {
         console.error('❌ Customer notifier: Store API failed:', storeErr.message)
@@ -81,7 +81,7 @@ export default async function orderPlacedHandler({
               }
             }
           )
-          order = response.data.order
+          order = (response.data as { order: any }).order
           console.log('✅ Customer notifier: Order fetched successfully via admin API')
         } catch (adminErr) {
           console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
@@ -212,25 +212,7 @@ export default async function orderPlacedHandler({
 
 /**
  * Format monetary values properly from cents to dollars/pounds
- */
-function formatMoney(value) {
-  if (value === null || value === undefined) {
-    return "0.00"
-  }
-  
-  // Make sure we're working with a number
-  const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
-  // Check if the value is already in dollars/pounds format
-  // If the value is small (e.g., 10.98 instead of 1098), assume it's already formatted
-  if (numValue < 100 && numValue % 1 !== 0) {
-    // Value is likely already in dollars/pounds format (has decimals and is small)
-    return numValue.toFixed(2)
-  } else {
-    // Value is likely in cents, convert to dollars/pounds
-    return (numValue / 100).toFixed(2)
-  }
-}
+
 
 /**
  * Format the order object for the email template
@@ -239,7 +221,7 @@ function formatOrderForTemplate(order) {
   // Format the order items
   const formattedItems = order.items ? order.items.map(item => ({
     ...item,
-    unit_price: formatMoney(item.unit_price),
+    unit_price: item.unit_price,
     title: item.title || (item.variant?.title || ''),
     variant: item.variant || {}
   })) : []
@@ -248,11 +230,11 @@ function formatOrderForTemplate(order) {
   return {
     ...order,
     display_id: order.display_id || order.id,
-    total: formatMoney(order.total),
-    subtotal: formatMoney(order.subtotal),
-    tax_total: formatMoney(order.tax_total),
-    shipping_total: formatMoney(order.shipping_total),
-    discount_total: formatMoney(order.discount_total || 0),
+    total: order.total,
+    subtotal: order.subtotal,
+    tax_total: order.tax_total,
+    shipping_total: order.shipping_total,
+    discount_total: order.discount_total || 0,
     items: formattedItems
   }
 }
