@@ -19,6 +19,54 @@ if (process.env.SENDGRID_API_KEY) {
   console.error('❌ Customer notifier: SENDGRID_API_KEY is not set!')
 }
 
+// Fetch order data with retry mechanism
+async function fetchOrderWithRetry(baseUrl, orderId, retry = 3, delay = 2000) {
+  const publishableKey = PUBLISHABLE_API_KEY
+  const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET
+  
+  for (let attempt = 1; attempt <= retry; attempt++) {
+    try {
+      console.log(`🔍 Customer notifier: Fetching order via store API (attempt ${attempt}/${retry}): ${orderId}`)
+      const response = await axios.get(
+        `${baseUrl}/store/orders/${orderId}`, 
+        {
+          headers: {
+            'x-publishable-api-key': publishableKey
+          }
+        }
+      )
+      console.log('✅ Customer notifier: Order fetched successfully via store API')
+      return response.data.order
+    } catch (storeErr) {
+      console.error(`❌ Customer notifier: Store API failed (attempt ${attempt}/${retry}):`, storeErr.message)
+      
+      // If this is the last store API attempt, try admin API
+      if (attempt === retry) {
+        try {
+          console.log(`🔍 Customer notifier: Fetching order via admin API: ${orderId}`)
+          const response = await axios.get(
+            `${baseUrl}/admin/orders/${orderId}`,
+            {
+              headers: {
+                'x-medusa-access-token': apiToken
+              }
+            }
+          )
+          console.log('✅ Customer notifier: Order fetched successfully via admin API')
+          return response.data.order
+        } catch (adminErr) {
+          console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
+          throw new Error('Both API methods failed')
+        }
+      }
+      
+      // Wait before retrying
+      console.log(`🔄 Customer notifier: Waiting ${delay/1000}s before retry...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+}
+
 export default async function orderPlacedHandler({
   event,
   container,
@@ -44,12 +92,11 @@ export default async function orderPlacedHandler({
     // Use the notification module directly
     const notificationModuleService = container.resolve(Modules.NOTIFICATION)
     const baseUrl = process.env.BACKEND_URL || 'http://localhost:9000'
-    const apiToken = process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET
     
     // For order.placed events, use the order ID directly
     const orderId = data.id
     
-    // Fetch order data
+    // Fetch order data with retries
     let order
     try {
       console.log('🔍 Customer notifier: Fetching order via store API:', orderId)
@@ -63,7 +110,7 @@ export default async function orderPlacedHandler({
             }
           }
         )
-        order = (response.data as { order: any }).order
+        order = response.data.order
         console.log('✅ Customer notifier: Order fetched successfully via store API')
       } catch (storeErr) {
         console.error('❌ Customer notifier: Store API failed:', storeErr.message)
@@ -81,7 +128,7 @@ export default async function orderPlacedHandler({
               }
             }
           )
-          order = (response.data as { order: any }).order
+          order = response.data.order
           console.log('✅ Customer notifier: Order fetched successfully via admin API')
         } catch (adminErr) {
           console.error('❌ Customer notifier: Admin API failed:', adminErr.message)
@@ -105,13 +152,34 @@ export default async function orderPlacedHandler({
           }
         }
       }
-    } catch (err) {
-      console.error('❌ Customer notifier: Error fetching order via API:', err.message)
-      return
     }
     
     if (!order) {
       console.error('❌ Customer notifier: Order not found or could not be retrieved')
+      return
+    }
+    
+    // Don't proceed if we still don't have essential data
+    if (!order.total || !order.subtotal) {
+      console.error('❌ Customer notifier: Critical order data missing, cannot format email')
+      
+      // Only proceed with admin notification about the issue
+      try {
+        const msg = {
+          to: ADMIN_EMAIL,
+          from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
+          subject: `⚠️ Order Processing Issue: #${order.display_id || order.id}`,
+          text: `An order (${order.id}) was placed but the system couldn't retrieve complete details. Manual follow-up required.`
+        };
+        
+        if (process.env.SENDGRID_API_KEY) {
+          await sgMail.send(msg);
+          console.log('✅ Admin alert sent about order data issue')
+        }
+      } catch (alertErr) {
+        console.error('❌ Failed to send admin alert:', alertErr)
+      }
+      
       return
     }
     
