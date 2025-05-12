@@ -44,9 +44,15 @@ importers:
       '@react-email/components':
         specifier: ^0.0.26
         version: 0.0.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@sendgrid/mail':
+        specifier: ^8.1.5
+        version: 8.1.5
       awilix:
         specifier: ^8.0.1
         version: 8.0.1
+      axios:
+        specifier: ^1.9.0
+        version: 1.9.0
       medusajs-launch-utils:
         specifier: latest
         version: 0.0.14
@@ -3367,16 +3373,16 @@ packages:
   '@selderee/plugin-htmlparser2@0.11.0':
     resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
-  '@sendgrid/client@8.1.4':
-    resolution: {integrity: sha512-VxZoQ82MpxmjSXLR3ZAE2OWxvQIW2k2G24UeRPr/SYX8HqWLV/8UBN15T2WmjjnEb5XSmFImTJOKDzzSeKr9YQ==}
+  '@sendgrid/client@8.1.5':
+    resolution: {integrity: sha512-Jqt8aAuGIpWGa15ZorTWI46q9gbaIdQFA21HIPQQl60rCjzAko75l3D1z7EyjFrNr4MfQ0StusivWh8Rjh10Cg==}
     engines: {node: '>=12.*'}
 
   '@sendgrid/helpers@8.0.0':
     resolution: {integrity: sha512-Ze7WuW2Xzy5GT5WRx+yEv89fsg/pgy3T1E3FS0QEx0/VvRmigMZ5qyVGhJz4SxomegDkzXv/i0aFPpHKN8qdAA==}
     engines: {node: '>= 12.0.0'}
 
-  '@sendgrid/mail@8.1.4':
-    resolution: {integrity: sha512-MUpIZykD9ARie8LElYCqbcBhGGMaA/E6I7fEcG7Hc2An26QJyLtwOaKQ3taGp8xO8BICPJrSKuYV4bDeAJKFGQ==}
+  '@sendgrid/mail@8.1.5':
+    resolution: {integrity: sha512-W+YuMnkVs4+HA/bgfto4VHKcPKLc7NiZ50/NH2pzO6UHCCFuq8/GNB98YJlLEr/ESDyzAaDr7lVE7hoBwFTT3Q==}
     engines: {node: '>=12.*'}
 
   '@sinclair/typebox@0.27.8':
@@ -3979,8 +3985,8 @@ packages:
   axios@0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
-  axios@1.8.4:
-    resolution: {integrity: sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw==}
+  axios@1.9.0:
+    resolution: {integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==}
 
   babel-jest@29.7.0:
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -9217,14 +9223,14 @@ snapshots:
   '@medusajs/notification-sendgrid@2.4.0(@medusajs/framework@2.4.0(@babel/core@7.26.8)(@medusajs/cli@2.4.0(@babel/core@7.26.8)(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))(@mikro-orm/cli@6.4.3(pg@8.14.1))(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))':
     dependencies:
       '@medusajs/framework': 2.4.0(@babel/core@7.26.8)(@medusajs/cli@2.4.0(@babel/core@7.26.8)(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))(@mikro-orm/cli@6.4.3(pg@8.14.1))(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17))
-      '@sendgrid/mail': 8.1.4
+      '@sendgrid/mail': 8.1.5
     transitivePeerDependencies:
       - debug
 
   '@medusajs/notification-sendgrid@2.6.1(@medusajs/framework@2.4.0(@babel/core@7.26.8)(@medusajs/cli@2.4.0(@babel/core@7.26.8)(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))(@mikro-orm/cli@6.4.3(pg@8.14.1))(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))':
     dependencies:
       '@medusajs/framework': 2.4.0(@babel/core@7.26.8)(@medusajs/cli@2.4.0(@babel/core@7.26.8)(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17)))(@mikro-orm/cli@6.4.3(pg@8.14.1))(@mikro-orm/core@6.4.3)(@mikro-orm/knex@6.4.3(@mikro-orm/core@6.4.3)(pg@8.14.1))(@mikro-orm/migrations@6.4.3(@mikro-orm/core@6.4.3)(@types/node@20.17.17)(pg@8.14.1))(@mikro-orm/postgresql@6.4.3(@mikro-orm/core@6.4.3))(awilix@8.0.1)(ioredis@5.5.0)(pg@8.14.1)(vite@5.4.14(@types/node@20.17.17))
-      '@sendgrid/mail': 8.1.4
+      '@sendgrid/mail': 8.1.5
     transitivePeerDependencies:
       - debug
 
@@ -11532,10 +11538,10 @@ snapshots:
       domhandler: 5.0.3
       selderee: 0.11.0
 
-  '@sendgrid/client@8.1.4':
+  '@sendgrid/client@8.1.5':
     dependencies:
       '@sendgrid/helpers': 8.0.0
-      axios: 1.8.4
+      axios: 1.9.0
     transitivePeerDependencies:
       - debug
 
@@ -11543,9 +11549,9 @@ snapshots:
     dependencies:
       deepmerge: 4.3.1
 
-  '@sendgrid/mail@8.1.4':
+  '@sendgrid/mail@8.1.5':
     dependencies:
-      '@sendgrid/client': 8.1.4
+      '@sendgrid/client': 8.1.5
       '@sendgrid/helpers': 8.0.0
     transitivePeerDependencies:
       - debug
@@ -12247,7 +12253,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.8.4:
+  axios@1.9.0:
     dependencies:
       follow-redirects: 1.15.9
       form-data: 4.0.1
