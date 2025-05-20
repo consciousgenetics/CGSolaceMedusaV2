@@ -236,7 +236,7 @@ export default async function orderPlacedHandler({
             emailOptions: {
               from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
               replyTo: 'info@consciousgenetics.com',
-              subject: 'Your order has been placed'
+              subject: 'Conscious Genetics Order Submitted'
             },
             order: formattedOrder,
             shippingAddress,
@@ -254,6 +254,7 @@ export default async function orderPlacedHandler({
         const msg = {
           to: order.email,
           from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
+          subject: "Conscious Genetics Order Submitted",
           templateId: process.env.SENDGRID_ORDER_PLACED_ID,
           dynamicTemplateData: {
             order: formattedOrder,
@@ -284,7 +285,19 @@ export default async function orderPlacedHandler({
 
 /**
  * Format monetary values properly from cents to dollars/pounds
-
+ * Medusa stores prices in cents/pennies by default
+ */
+function formatMoney(value) {
+  if (value === null || value === undefined) {
+    return "0";
+  }
+  
+  // Make sure we're working with a number
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  // Return whole number value without dividing by 100
+  return Math.round(numValue).toString();
+}
 
 /**
  * Format the order object for the email template

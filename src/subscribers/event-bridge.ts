@@ -63,8 +63,8 @@ export default async function eventBridgeHandler({
           }
         )
         
-        if (ordersResponse.data.orders && ordersResponse.data.orders.length > 0) {
-          const recentOrder = ordersResponse.data.orders[0]
+        if ((ordersResponse.data as any).orders && (ordersResponse.data as any).orders.length > 0) {
+          const recentOrder = (ordersResponse.data as any).orders[0]
           const orderId = recentOrder.id
           
           console.log(`🚀 Emitting order.placed for recent order ${orderId}`)
@@ -116,22 +116,14 @@ function extractCartId(id) {
  */
 function formatMoney(value) {
   if (value === null || value === undefined) {
-    return "0.00";
+    return "0";
   }
   
   // Make sure we're working with a number
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   
-  // Check if this value is likely already in dollars/pounds format
-  // Most Medusa values are in cents, so they'll be much larger numbers
-  if (numValue < 100 && Number.isInteger(numValue)) {
-    // This might already be in dollars/pounds, log a warning
-    console.warn(`⚠️ Price value ${numValue} seems suspiciously low, might already be in dollars/pounds`);
-  }
-  
-  // Divide by 100 to convert from cents to dollars/pounds
-  // Ensure we get 2 decimal places with toFixed(2)
-  return (numValue / 100).toFixed(2);
+  // Return whole number value without dividing by 100
+  return Math.round(numValue).toString();
 }
 
 /**
@@ -160,12 +152,12 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
         }
       )
       
-      if (!response.data.orders || response.data.orders.length === 0) {
+      if (!(response.data as any).orders || (response.data as any).orders.length === 0) {
         console.error("❌ No recent orders found in store API")
         return
       }
       
-      const order = response.data.orders[0]
+      const order = (response.data as any).orders[0]
       console.log("✅ Found recent order ID:", order.id)
       
       // Extract customer email
@@ -226,14 +218,19 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
       // Send customer email
       try {
         const customerMsg = {
+          subject: 'Conscious Genetics Order Submitted',
           to: customerEmail,
           from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
-          subject: 'Your order has been placed',
           templateId: process.env.SENDGRID_ORDER_PLACED_ID,
           dynamicTemplateData: {
             order: orderData,
             shippingAddress,
-            preview: 'Thank you for your order!'
+            preview: 'Thank you for your order!',
+            subject: 'Conscious Genetics Order Submitted'
+          },
+          categories: ['order-confirmation'],
+          customArgs: {
+            subject: 'Conscious Genetics Order Submitted'
           }
         }
         

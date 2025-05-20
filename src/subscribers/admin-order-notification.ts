@@ -59,8 +59,8 @@ export default async function adminOrderNotificationHandler({
           }
         )
         
-        if (response.data.orders && response.data.orders.length > 0) {
-          orderId = response.data.orders[0].id
+        if ((response.data as any).orders && (response.data as any).orders.length > 0) {
+          orderId = (response.data as any).orders[0].id
           console.log("✅ Admin notifier: Found recent order ID:", orderId)
         } else {
           console.error("❌ Admin notifier: No recent orders found")
@@ -86,7 +86,7 @@ export default async function adminOrderNotificationHandler({
         }
       )
       
-      order = response.data.order
+      order = (response.data as any).order
       console.log("✅ Admin notifier: Order details retrieved successfully")
     } catch (error) {
       console.error("❌ Admin notifier: Failed to fetch order details:", error.message)
@@ -191,14 +191,14 @@ export default async function adminOrderNotificationHandler({
  */
 function formatMoney(value) {
   if (value === null || value === undefined) {
-    return "0.00"
+    return "0"
   }
   
   // Make sure we're working with a number
   const numValue = typeof value === 'string' ? parseFloat(value) : value
   
-  // Most Medusa values are in cents, so divide by 100
-  return (numValue / 100).toFixed(2)
+  // Return whole number value without dividing by 100
+  return Math.round(numValue).toString()
 }
 
 /**

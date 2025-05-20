@@ -169,12 +169,14 @@ async function adminOrderNotificationHandler({ event, container, }) {
  */
 function formatMoney(value) {
     if (value === null || value === undefined) {
-        return "0.00";
+        return "0";
     }
+    
     // Make sure we're working with a number
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    // Most Medusa values are in cents, so divide by 100
-    return (numValue / 100).toFixed(2);
+    
+    // Return whole number value without dividing by 100
+    return Math.round(numValue).toString();
 }
 /**
  * Format the order object for the email template

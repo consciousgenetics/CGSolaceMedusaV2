@@ -39,7 +39,7 @@ export async function GET(
           }
         }
       );
-      order = response.data.order;
+      order = (response.data as { order: any }).order;
       console.log('Order fetched successfully');
     } catch (error) {
       res.status(404).json({ 
@@ -66,13 +66,19 @@ export async function GET(
     
     // Send email directly via SendGrid
     const msg = {
+      subject: "Conscious Genetics Order Submitted",
       to: order.email,
       from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
       templateId: process.env.SENDGRID_ORDER_PLACED_ID,
       dynamicTemplateData: {
         order: enrichedOrder,
         shippingAddress,
-        preview: 'Thank you for your order!'
+        preview: 'Thank you for your order!',
+        subject: "Conscious Genetics Order Submitted"
+      },
+      categories: ['order-confirmation'],
+      customArgs: {
+        subject: "Conscious Genetics Order Submitted"
       }
     };
     

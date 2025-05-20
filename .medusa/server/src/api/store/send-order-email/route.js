@@ -55,13 +55,19 @@ async function GET(req, res) {
         const enrichedOrder = { ...order };
         // Send email directly via SendGrid
         const msg = {
+            subject: "Conscious Genetics Order Submitted",
             to: order.email,
             from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
             templateId: process.env.SENDGRID_ORDER_PLACED_ID,
             dynamicTemplateData: {
                 order: enrichedOrder,
                 shippingAddress,
-                preview: 'Thank you for your order!'
+                preview: 'Thank you for your order!',
+                subject: "Conscious Genetics Order Submitted"
+            },
+            categories: ['order-confirmation'],
+            customArgs: {
+                subject: "Conscious Genetics Order Submitted"
             }
         };
         await mail_1.default.send(msg);
