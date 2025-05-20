@@ -103,11 +103,27 @@ function formatMoney(value) {
     if (value === null || value === undefined) {
         return "0";
     }
+    
     // Make sure we're working with a number
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     
     // Return whole number value without dividing by 100
     return Math.round(numValue).toString();
+}
+/**
+ * Get currency symbol from currency code
+ */
+function getCurrencySymbol(currencyCode) {
+    const symbols = {
+        'usd': '$',
+        'eur': '€',
+        'gbp': '£',
+        'jpy': '¥',
+        'cad': 'C$',
+        'aud': 'A$'
+    };
+    
+    return symbols[currencyCode.toLowerCase()] || currencyCode.toUpperCase();
 }
 /**
  * Send emails directly without relying on event handlers, using recent order approach
@@ -158,13 +174,15 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
                 tax_total: formatMoney(order.tax_total),
                 shipping_total: formatMoney(order.shipping_total),
                 discount_total: formatMoney(order.discount_total),
+                // Get currency info
+                currency_code: order.currency_code || 'gbp',
+                currency_symbol: getCurrencySymbol(order.currency_code || 'gbp'),
                 items: order.items ? order.items.map(item => {
-                    var _a;
                     const formattedPrice = formatMoney(item.unit_price);
                     return {
                         ...item,
                         unit_price: formattedPrice,
-                        title: item.title || (((_a = item.variant) === null || _a === void 0 ? void 0 : _a.title) || ''),
+                        title: item.title || (item.variant?.title || ''),
                         variant: item.variant || {}
                     };
                 }) : []
@@ -234,7 +252,7 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
                         to: 'info@consciousgenetics.com',
                         from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
                         subject: `New Order #${order.display_id || order.id} from ${customerEmail}`,
-                        text: `A new order #${order.display_id || order.id} has been placed by ${customerEmail} for a total of £${orderData.total}.`
+                        text: `A new order #${order.display_id || order.id} has been placed by ${customerEmail} for a total of ${orderData.currency_symbol}${orderData.total}.`
                     };
                     await mail_1.default.send(simpleMsg);
                     console.log("✅ Simple admin notification sent as fallback");

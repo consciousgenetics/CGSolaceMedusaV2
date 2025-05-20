@@ -160,11 +160,11 @@ export default async function adminOrderNotificationHandler({
             Order #: ${order.display_id || order.id}
             Customer: ${customerEmail}
             Date: ${new Date(order.created_at).toLocaleString()}
-            Total: £${formattedOrder.total}
+            Total: ${formattedOrder.currency_symbol}${formattedOrder.total}
             
             Items:
             ${order.items ? order.items.map(item => 
-              `- ${item.title} (${item.quantity} x £${formatMoney(item.unit_price)})`
+              `- ${item.title} (${item.quantity} x ${formattedOrder.currency_symbol}${formatMoney(item.unit_price)})`
             ).join('\n') : 'No items'}
             
             Shipping Address:
@@ -213,6 +213,11 @@ function formatOrderForTemplate(order) {
     variant: item.variant || {}
   })) : []
   
+  // Get currency code from order, default to GBP if not present
+  const currency = order.currency_code || 'gbp'
+  // Get currency symbol based on currency code
+  const currencySymbol = getCurrencySymbol(currency)
+  
   // Return the formatted order object
   return {
     ...order,
@@ -222,8 +227,27 @@ function formatOrderForTemplate(order) {
     tax_total: formatMoney(order.tax_total),
     shipping_total: formatMoney(order.shipping_total),
     discount_total: formatMoney(order.discount_total || 0),
-    items: formattedItems
+    items: formattedItems,
+    // Add currency info to the formatted order
+    currency_code: currency,
+    currency_symbol: currencySymbol
   }
+}
+
+/**
+ * Get currency symbol from currency code
+ */
+function getCurrencySymbol(currencyCode) {
+  const symbols = {
+    'usd': '$',
+    'eur': '€',
+    'gbp': '£',
+    'jpy': '¥',
+    'cad': 'C$',
+    'aud': 'A$'
+  }
+  
+  return symbols[currencyCode.toLowerCase()] || currencyCode.toUpperCase()
 }
 
 // Listen for the same events as the order-placed subscriber

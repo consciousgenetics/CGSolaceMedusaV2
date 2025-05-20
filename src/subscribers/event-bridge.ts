@@ -127,6 +127,22 @@ function formatMoney(value) {
 }
 
 /**
+ * Get currency symbol from currency code
+ */
+function getCurrencySymbol(currencyCode) {
+  const symbols = {
+    'usd': '$',
+    'eur': '€',
+    'gbp': '£',
+    'jpy': '¥',
+    'cad': 'C$',
+    'aud': 'A$'
+  }
+  
+  return symbols[currencyCode.toLowerCase()] || currencyCode.toUpperCase()
+}
+
+/**
  * Send emails directly without relying on event handlers, using recent order approach
  */
 async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, container) {
@@ -186,6 +202,9 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
         tax_total: formatMoney(order.tax_total),
         shipping_total: formatMoney(order.shipping_total),
         discount_total: formatMoney(order.discount_total),
+        // Get currency info
+        currency_code: order.currency_code || 'gbp',
+        currency_symbol: getCurrencySymbol(order.currency_code || 'gbp'),
         items: order.items ? order.items.map(item => {
           const formattedPrice = formatMoney(item.unit_price);
           return {
@@ -267,7 +286,7 @@ async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, contain
             to: 'info@consciousgenetics.com',
             from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
             subject: `New Order #${order.display_id || order.id} from ${customerEmail}`,
-            text: `A new order #${order.display_id || order.id} has been placed by ${customerEmail} for a total of £${orderData.total}.`
+            text: `A new order #${order.display_id || order.id} has been placed by ${customerEmail} for a total of ${orderData.currency_symbol}${orderData.total}.`
           }
           
           await sgMail.send(simpleMsg)
