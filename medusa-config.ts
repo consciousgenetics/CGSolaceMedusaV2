@@ -1,4 +1,3 @@
-import { loadEnv, Modules, defineConfig } from '@medusajs/utils';
 import {
   ADMIN_CORS,
   AUTH_CORS,
@@ -7,32 +6,20 @@ import {
   DATABASE_URL,
   JWT_SECRET,
   REDIS_URL,
-  RESEND_API_KEY,
-  RESEND_FROM_EMAIL,
-  SENDGRID_API_KEY,
-  SENDGRID_FROM_EMAIL,
   SHOULD_DISABLE_ADMIN,
   STORE_CORS,
-  STRIPE_API_KEY,
-  STRIPE_WEBHOOK_SECRET,
   WORKER_MODE,
-  MINIO_ENDPOINT,
-  MINIO_ACCESS_KEY,
-  MINIO_SECRET_KEY,
-  MINIO_BUCKET,
-  MEILISEARCH_HOST,
-  MEILISEARCH_ADMIN_KEY
-} from './src/lib/constants';
+} from "./src/lib/constants";
+import { defineConfig, loadEnv, Modules } from "@medusajs/framework/utils";
 // import { MARKETPLACE_MODULE } from 'modules/marketplace';
 
-loadEnv(process.env.NODE_ENV, process.cwd());
-
-const isDevelopment = process.env.NODE_ENV === 'development';
+loadEnv(process.env.NODE_ENV || "development", process.cwd());
+const isDevelopment = process.env.NODE_ENV === "development";
 
 const fileModule = {
   key: Modules.FILE,
-  resolve: '@medusajs/file',
-  id: 's3',
+  resolve: "@medusajs/file",
+  id: "s3",
   options: {
     providers: [
       {
@@ -49,7 +36,7 @@ const fileModule = {
           endpoint: process.env.S3_ENDPOINT,
           force_path_style: true,
           s3_force_path_style: true,
-          signature_version: 'v4',
+          signature_version: "v4",
           max_attempts: 3,
           retry_delay: 1000,
           retry_delay_base: 1000,
@@ -71,8 +58,8 @@ const medusaConfig = {
       authCors: AUTH_CORS,
       storeCors: STORE_CORS,
       jwtSecret: JWT_SECRET,
-      cookieSecret: COOKIE_SECRET
-    }
+      cookieSecret: COOKIE_SECRET,
+    },
   },
   admin: {
     backendUrl: BACKEND_URL,
@@ -80,25 +67,29 @@ const medusaConfig = {
   },
   modules: [
     fileModule,
-    ...(REDIS_URL ? [{
-      key: Modules.EVENT_BUS,
-      resolve: '@medusajs/event-bus-redis',
-      options: {
-        redisUrl: REDIS_URL
-      }
-    },
+    ...(REDIS_URL
+      ? [
+          {
+            key: Modules.EVENT_BUS,
+            resolve: "@medusajs/event-bus-redis",
+            options: {
+              redisUrl: REDIS_URL,
+            },
+          },
+          {
+            key: Modules.WORKFLOW_ENGINE,
+            resolve: "@medusajs/workflow-engine-redis",
+            options: {
+              redis: {
+                url: REDIS_URL,
+              },
+            },
+          },
+        ]
+      : []),
     {
-      key: Modules.WORKFLOW_ENGINE,
-      resolve: '@medusajs/workflow-engine-redis',
-      options: {
-        redis: {
-          url: REDIS_URL,
-        }
-      }
-    }] : []),
-      {
       key: Modules.NOTIFICATION,
-      resolve: '@medusajs/notification',
+      resolve: "@medusajs/notification",
       options: {
         providers: [
           {
@@ -110,9 +101,8 @@ const medusaConfig = {
               from: process.env.SENDGRID_FROM,
             },
           },
-
-        ]
-      }
+        ],
+      },
     },
   ],
 };

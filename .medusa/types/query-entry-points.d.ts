@@ -35,7 +35,6 @@ export type WorkflowExecution = {
   execution: Maybe<Scalars['JSON']['output']>;
   context: Maybe<Scalars['JSON']['output']>;
   state: WorkflowExecutionStateEnum;
-  retention_time: Maybe<Scalars['Int']['output']>;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
   deleted_at: Maybe<Scalars['DateTime']['output']>;
@@ -176,8 +175,6 @@ export type Product = {
   metadata: Maybe<Scalars['JSON']['output']>;
   sales_channels_link: Maybe<Array<Maybe<LinkProductSalesChannel>>>;
   sales_channels: Maybe<Array<Maybe<SalesChannel>>>;
-  shipping_profiles_link: Maybe<LinkProductShippingProfile>;
-  shipping_profile: Maybe<ShippingProfile>;
 };
 
 export type ProductVariant = {
@@ -482,7 +479,6 @@ export type CustomerAddress = {
   postal_code: Maybe<Scalars['String']['output']>;
   phone: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
-  customer_id: Scalars['String']['output'];
   customer: Customer;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -494,9 +490,7 @@ export type CustomerGroupCustomer = {
   id: Scalars['ID']['output'];
   created_by: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
-  customer_id: Scalars['String']['output'];
   customer: Customer;
-  customer_group_id: Scalars['String']['output'];
   customer_group: CustomerGroup;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -533,7 +527,6 @@ export type Customer = {
   deleted_at: Maybe<Scalars['DateTime']['output']>;
   carts: Maybe<Array<Maybe<Cart>>>;
   orders: Maybe<Array<Maybe<Order>>>;
-  account_holder_link: Maybe<LinkCustomerAccountHolder>;
 };
 
 export type SalesChannel = {
@@ -565,12 +558,9 @@ export type Cart = {
   currency_code: Scalars['String']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
   completed_at: Maybe<Scalars['DateTime']['output']>;
-  shipping_address_id: Maybe<Scalars['String']['output']>;
   shipping_address: Maybe<Address>;
-  billing_address_id: Maybe<Scalars['String']['output']>;
   billing_address: Maybe<Address>;
   items: Array<Maybe<LineItem>>;
-  credit_lines: Array<Maybe<CreditLine>>;
   shipping_methods: Array<Maybe<ShippingMethod>>;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -584,21 +574,6 @@ export type Cart = {
   customer: Maybe<Customer>;
   region: Maybe<Region>;
   sales_channel: Maybe<SalesChannel>;
-};
-
-export type CreditLine = {
-  __typename?: 'CreditLine';
-  id: Scalars['ID']['output'];
-  cart_id: Scalars['String']['output'];
-  cart: Cart;
-  reference: Maybe<Scalars['String']['output']>;
-  reference_id: Maybe<Scalars['String']['output']>;
-  amount: Scalars['String']['output'];
-  raw_amount: Scalars['JSON']['output'];
-  metadata: Maybe<Scalars['JSON']['output']>;
-  created_at: Scalars['DateTime']['output'];
-  updated_at: Scalars['DateTime']['output'];
-  deleted_at: Maybe<Scalars['DateTime']['output']>;
 };
 
 export type Address = {
@@ -650,7 +625,6 @@ export type LineItem = {
   metadata: Maybe<Scalars['JSON']['output']>;
   adjustments: Array<Maybe<LineItemAdjustment>>;
   tax_lines: Array<Maybe<LineItemTaxLine>>;
-  cart_id: Scalars['String']['output'];
   cart: Cart;
   raw_compare_at_unit_price: Maybe<Scalars['JSON']['output']>;
   raw_unit_price: Scalars['JSON']['output'];
@@ -669,7 +643,6 @@ export type LineItemAdjustment = {
   provider_id: Maybe<Scalars['String']['output']>;
   promotion_id: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
-  item_id: Scalars['String']['output'];
   item: LineItem;
   raw_amount: Scalars['JSON']['output'];
   created_at: Scalars['DateTime']['output'];
@@ -687,7 +660,6 @@ export type LineItemTaxLine = {
   provider_id: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
   tax_rate_id: Maybe<Scalars['String']['output']>;
-  item_id: Scalars['String']['output'];
   item: LineItem;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -704,7 +676,6 @@ export type ShippingMethod = {
   shipping_option_id: Maybe<Scalars['String']['output']>;
   data: Maybe<Scalars['JSON']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
-  cart_id: Scalars['String']['output'];
   cart: Cart;
   tax_lines: Array<Maybe<ShippingMethodTaxLine>>;
   adjustments: Array<Maybe<ShippingMethodAdjustment>>;
@@ -723,7 +694,6 @@ export type ShippingMethodAdjustment = {
   provider_id: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
   promotion_id: Maybe<Scalars['String']['output']>;
-  shipping_method_id: Scalars['String']['output'];
   shipping_method: ShippingMethod;
   raw_amount: Scalars['JSON']['output'];
   created_at: Scalars['DateTime']['output'];
@@ -740,7 +710,6 @@ export type ShippingMethodTaxLine = {
   provider_id: Maybe<Scalars['String']['output']>;
   tax_rate_id: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
-  shipping_method_id: Scalars['String']['output'];
   shipping_method: ShippingMethod;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -771,7 +740,6 @@ export type Country = {
   num_code: Scalars['String']['output'];
   name: Scalars['String']['output'];
   display_name: Scalars['String']['output'];
-  region_id: Maybe<Scalars['String']['output']>;
   region: Maybe<Region>;
   metadata: Maybe<Scalars['JSON']['output']>;
   created_at: Scalars['DateTime']['output'];
@@ -823,7 +791,6 @@ export type StoreCurrency = {
   id: Scalars['ID']['output'];
   currency_code: Scalars['String']['output'];
   is_default: Scalars['Boolean']['output'];
-  store_id: Maybe<Scalars['String']['output']>;
   store: Maybe<Store>;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
@@ -838,7 +805,6 @@ export type TaxRate = {
   name: Scalars['String']['output'];
   is_default: Scalars['Boolean']['output'];
   is_combinable: Scalars['Boolean']['output'];
-  tax_region_id: Scalars['String']['output'];
   tax_region: TaxRegion;
   rules: Array<Maybe<TaxRateRule>>;
   metadata: Maybe<Scalars['JSON']['output']>;
@@ -855,9 +821,7 @@ export type TaxRegion = {
   province_code: Maybe<Scalars['String']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
   created_by: Maybe<Scalars['String']['output']>;
-  provider_id: Maybe<Scalars['String']['output']>;
   provider: Maybe<TaxProvider>;
-  parent_id: Maybe<Scalars['String']['output']>;
   parent: Maybe<TaxRegion>;
   children: Array<Maybe<TaxRegion>>;
   tax_rates: Array<Maybe<TaxRate>>;
@@ -871,7 +835,6 @@ export type TaxRateRule = {
   id: Scalars['ID']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
   created_by: Maybe<Scalars['String']['output']>;
-  tax_rate_id: Scalars['String']['output'];
   tax_rate: TaxRate;
   reference: Scalars['String']['output'];
   reference_id: Scalars['String']['output'];
@@ -1039,22 +1002,23 @@ export enum ChangeActionType {
 
 export type OrderSummary = {
   __typename?: 'OrderSummary';
-  pending_difference: Maybe<Scalars['Float']['output']>;
-  current_order_total: Maybe<Scalars['Float']['output']>;
-  original_order_total: Maybe<Scalars['Float']['output']>;
-  transaction_total: Maybe<Scalars['Float']['output']>;
+  total: Maybe<Scalars['Float']['output']>;
+  subtotal: Maybe<Scalars['Float']['output']>;
+  total_tax: Maybe<Scalars['Float']['output']>;
+  ordered_total: Maybe<Scalars['Float']['output']>;
+  fulfilled_total: Maybe<Scalars['Float']['output']>;
+  returned_total: Maybe<Scalars['Float']['output']>;
+  return_request_total: Maybe<Scalars['Float']['output']>;
+  write_off_total: Maybe<Scalars['Float']['output']>;
+  projected_total: Maybe<Scalars['Float']['output']>;
+  net_total: Maybe<Scalars['Float']['output']>;
+  net_subtotal: Maybe<Scalars['Float']['output']>;
+  net_total_tax: Maybe<Scalars['Float']['output']>;
+  balance: Maybe<Scalars['Float']['output']>;
   paid_total: Maybe<Scalars['Float']['output']>;
   refunded_total: Maybe<Scalars['Float']['output']>;
-  credit_line_total: Maybe<Scalars['Float']['output']>;
-  accounting_total: Maybe<Scalars['Float']['output']>;
+  pending_difference: Maybe<Scalars['Float']['output']>;
   raw_pending_difference: Maybe<Scalars['JSON']['output']>;
-  raw_current_order_total: Maybe<Scalars['JSON']['output']>;
-  raw_original_order_total: Maybe<Scalars['JSON']['output']>;
-  raw_transaction_total: Maybe<Scalars['JSON']['output']>;
-  raw_paid_total: Maybe<Scalars['JSON']['output']>;
-  raw_refunded_total: Maybe<Scalars['JSON']['output']>;
-  raw_credit_line_total: Maybe<Scalars['JSON']['output']>;
-  raw_accounting_total: Maybe<Scalars['JSON']['output']>;
 };
 
 export type OrderShippingMethodAdjustment = {
@@ -1620,7 +1584,6 @@ export type ProviderIdentity = {
   id: Scalars['ID']['output'];
   entity_id: Scalars['String']['output'];
   provider: Scalars['String']['output'];
-  auth_identity_id: Scalars['String']['output'];
   auth_identity: AuthIdentity;
   user_metadata: Maybe<Scalars['JSON']['output']>;
   provider_metadata: Maybe<Scalars['JSON']['output']>;
@@ -1836,7 +1799,6 @@ export type ShippingProfile = {
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
   deleted_at: Maybe<Scalars['DateTime']['output']>;
-  products_link: Maybe<Array<Maybe<LinkProductShippingProfile>>>;
 };
 
 export enum NotificationStatusEnum {
@@ -1860,7 +1822,6 @@ export type Notification = {
   idempotency_key: Maybe<Scalars['String']['output']>;
   external_id: Maybe<Scalars['String']['output']>;
   status: NotificationStatusEnum;
-  provider_id: Maybe<Scalars['String']['output']>;
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
   deleted_at: Maybe<Scalars['DateTime']['output']>;
@@ -2040,28 +2001,6 @@ export type LinkShippingOptionPriceSet = {
   deletedAt: Maybe<Scalars['String']['output']>;
 };
 
-export type LinkProductShippingProfile = {
-  __typename?: 'LinkProductShippingProfile';
-  product_id: Scalars['String']['output'];
-  shipping_profile_id: Scalars['String']['output'];
-  product: Maybe<Product>;
-  shipping_profile: Maybe<Fulfillment>;
-  createdAt: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  deletedAt: Maybe<Scalars['String']['output']>;
-};
-
-export type LinkCustomerAccountHolder = {
-  __typename?: 'LinkCustomerAccountHolder';
-  customer_id: Scalars['String']['output'];
-  account_holder_id: Scalars['String']['output'];
-  customer: Maybe<Customer>;
-  account_holder: Maybe<Payment>;
-  createdAt: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  deletedAt: Maybe<Scalars['String']['output']>;
-};
-
 declare module '@medusajs/framework/types' {
   interface RemoteQueryEntryPoints {
     workflow_execution: WorkflowExecution
@@ -2123,8 +2062,6 @@ declare module '@medusajs/framework/types' {
     sales_channels: SalesChannel
     cart: Cart
     carts: Cart
-    credit_line: CreditLine
-    credit_lines: CreditLine
     address: Address
     addresses: Address
     line_item: LineItem
@@ -2171,8 +2108,6 @@ declare module '@medusajs/framework/types' {
     payment_sessions: PaymentSession
     refund_reason: RefundReason
     refund_reasons: RefundReason
-    account_holder: any
-    account_holders: any
     order: Order
     orders: Order
     order_address: OrderAddress
@@ -2263,9 +2198,5 @@ declare module '@medusajs/framework/types' {
     sales_channel_locations: LinkSalesChannelStockLocation
     shipping_option_price_set: LinkShippingOptionPriceSet
     shipping_option_price_sets: LinkShippingOptionPriceSet
-    product_shipping_profile: LinkProductShippingProfile
-    product_shipping_profiles: LinkProductShippingProfile
-    customer_account_holder: LinkCustomerAccountHolder
-    customer_account_holders: LinkCustomerAccountHolder
   }
 }
