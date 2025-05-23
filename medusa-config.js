@@ -1,4 +1,3 @@
-import { loadEnv, Modules, defineConfig } from '@medusajs/utils';
 import {
   ADMIN_CORS,
   AUTH_CORS,
@@ -7,27 +6,15 @@ import {
   DATABASE_URL,
   JWT_SECRET,
   REDIS_URL,
-  RESEND_API_KEY,
-  RESEND_FROM_EMAIL,
-  SENDGRID_API_KEY,
-  SENDGRID_FROM_EMAIL,
   SHOULD_DISABLE_ADMIN,
   STORE_CORS,
-  STRIPE_API_KEY,
-  STRIPE_WEBHOOK_SECRET,
   WORKER_MODE,
-  MINIO_ENDPOINT,
-  MINIO_ACCESS_KEY,
-  MINIO_SECRET_KEY,
-  MINIO_BUCKET,
-  MEILISEARCH_HOST,
-  MEILISEARCH_ADMIN_KEY
-} from './src/lib/constants';
+} from './src/lib/constants'
+import { defineConfig, loadEnv, Modules } from '@medusajs/framework/utils'
 // import { MARKETPLACE_MODULE } from 'modules/marketplace';
 
-loadEnv(process.env.NODE_ENV, process.cwd());
-
-const isDevelopment = process.env.NODE_ENV === 'development';
+loadEnv(process.env.NODE_ENV || 'development', process.cwd())
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 const fileModule = {
   key: Modules.FILE,
@@ -58,7 +45,7 @@ const fileModule = {
       },
     ],
   },
-};
+}
 
 const medusaConfig = {
   projectConfig: {
@@ -71,8 +58,8 @@ const medusaConfig = {
       authCors: AUTH_CORS,
       storeCors: STORE_CORS,
       jwtSecret: JWT_SECRET,
-      cookieSecret: COOKIE_SECRET
-    }
+      cookieSecret: COOKIE_SECRET,
+    },
   },
   admin: {
     backendUrl: BACKEND_URL,
@@ -80,64 +67,45 @@ const medusaConfig = {
   },
   modules: [
     fileModule,
-    ...(REDIS_URL ? [{
-      key: Modules.EVENT_BUS,
-      resolve: '@medusajs/event-bus-redis',
-      options: {
-        redisUrl: REDIS_URL,
-        redis: {
-          maxRetriesPerRequest: 3,
-          enableOfflineQueue: true,
-          reconnectOnError: (err) => {
-            console.log(`Redis event-bus reconnecting on error: ${err.message}`);
-            return true;
+    ...(REDIS_URL
+      ? [
+          {
+            key: Modules.EVENT_BUS,
+            resolve: '@medusajs/event-bus-redis',
+            options: {
+              redisUrl: REDIS_URL,
+            },
           },
-          retryStrategy: (times) => {
-            console.log(`Redis event-bus retry attempt: ${times}`);
-            return Math.min(times * 100, 3000);
-          }
-        }
-      }
-    },
+          {
+            key: Modules.WORKFLOW_ENGINE,
+            resolve: '@medusajs/workflow-engine-redis',
+            options: {
+              redis: {
+                url: REDIS_URL,
+              },
+            },
+          },
+        ]
+      : []),
     {
-      key: Modules.WORKFLOW_ENGINE,
-      resolve: '@medusajs/workflow-engine-redis',
-      options: {
-        redis: {
-          url: REDIS_URL,
-          maxRetriesPerRequest: 3,
-          enableOfflineQueue: true,
-          reconnectOnError: (err) => {
-            console.log(`Redis workflow-engine reconnecting on error: ${err.message}`);
-            return true;
-          },
-          retryStrategy: (times) => {
-            console.log(`Redis workflow-engine retry attempt: ${times}`);
-            return Math.min(times * 100, 3000);
-          }
-        }
-      }
-    }] : []),
-      {
       key: Modules.NOTIFICATION,
       resolve: '@medusajs/notification',
       options: {
         providers: [
           {
-            resolve: "@medusajs/notification-sendgrid",
-            id: "sendgrid",
+            resolve: '@medusajs/notification-sendgrid',
+            id: 'sendgrid',
             options: {
-              channels: ["email"],
+              channels: ['email'],
               api_key: process.env.SENDGRID_API_KEY,
               from: process.env.SENDGRID_FROM,
             },
           },
-
-        ]
-      }
+        ],
+      },
     },
   ],
-};
+}
 
-console.log(JSON.stringify(medusaConfig, null, 2));
-export default defineConfig(medusaConfig);
+console.log(JSON.stringify(medusaConfig, null, 2))
+export default defineConfig(medusaConfig)
