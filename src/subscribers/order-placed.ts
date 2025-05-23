@@ -450,7 +450,7 @@ export default async function placeOrder({
   await notificationModuleService.createNotifications({
     to: "info@consciousgenetics.com",
     channel: "email",
-    template: process.env.SENDGRID_ORDER_PLACED_ID,
+    template: process.env.SENDGRID_ADMIN_NOTIFICATION_ID,
     data: order,
   });
 }
