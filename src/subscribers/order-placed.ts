@@ -444,13 +444,13 @@ export default async function placeOrder({
     to: order.customer.email,
     channel: "email",
     template: process.env.SENDGRID_ORDER_PLACED_ID,
-    data: order,
+     data: order,
   });
 
   await notificationModuleService.createNotifications({
     to: "info@consciousgenetics.com",
     channel: "email",
-    template: process.env.SENDGRID_ADMIN_NOTIFICATION_ID,
+    template: process.env.SENDGRID_ORDER_PLACED_ID,
     data: order,
   });
 }
