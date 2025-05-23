@@ -423,6 +423,8 @@ export default async function placeOrder({
     "raw_original_shipping_total",
     "raw_original_shipping_subtotal",
     "raw_original_shipping_tax_total",
+    "shipping_address.*",
+    "billing_address.*",
     "customer.*",
     "items.*",
   ];
