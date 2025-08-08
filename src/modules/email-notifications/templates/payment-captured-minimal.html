@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #ffffff;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .success {
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success h3 {
+            color: #4caf50;
+            margin: 0 0 10px 0;
+        }
+        .info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info h4 {
+            margin-top: 0;
+            color: #782B8D;
+        }
+        .view-order-btn {
+            display: inline-block;
+            background-color: #782B8D;
+            color: #ffffff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            padding: 15px;
+            background-color: #eee;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://consciousgenetics.lon1.cdn.digitaloceanspaces.com/130.png" alt="Conscious Genetics" class="logo">
+            <h1>Payment Received!</h1>
+        </div>
+        <div class="content">
+            <div class="success">
+                <h3>✅ Payment Successfully Processed</h3>
+                <p>Your payment has been received and your order is now being processed.</p>
+            </div>
+
+            <p>Great news! We have successfully received your payment for order <strong>#{{order.display_id}}</strong>. Your order will be shipped soon.</p>
+
+            <div class="info">
+                <h4>Order Details</h4>
+                <p><strong>Order Number:</strong> {{order.display_id}}</p>
+                <p><strong>Amount Paid:</strong> {{order.currency_symbol}}{{order.summary.raw_current_order_total.value}}</p>
+                <p><strong>Customer Email:</strong> {{order.email}}</p>
+                <p><strong>Currency:</strong> {{order.currency_code}}</p>
+            </div>
+
+            <div class="info">
+                <h4>Order Items</h4>
+                <p><strong>{{order.items.[0].product_title}}</strong> - {{order.items.[0].title}}<br>
+                Quantity: {{order.items.[0].quantity}} | Price: {{order.currency_symbol}}{{order.items.[0].unit_price}}</p>
+            </div>
+
+            <div class="info">
+                <h4>Shipping Address</h4>
+                <p><strong>{{shippingAddress.first_name}} {{shippingAddress.last_name}}</strong><br>
+                {{shippingAddress.address_1}}<br>
+                {{shippingAddress.city}}, {{shippingAddress.province}} {{shippingAddress.postal_code}}<br>
+                {{shippingAddress.country_code}}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{storeUrl}}/orders/{{order.display_id}}" class="view-order-btn">View Your Order</a>
+            </div>
+
+            <div class="info">
+                <h4>What's Next?</h4>
+                <p>• We'll prepare your order for shipping</p>
+                <p>• You'll receive a tracking number once shipped</p>
+                <p>• Expected delivery: 3-5 business days</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Need help? Contact us at <a href="mailto:info@consciousgenetics.com" style="color: #782B8D;">info@consciousgenetics.com</a></p>
+            <p>&copy; {{currentYear}} Conscious Genetics. All rights reserved.</p>
+            <p>This is an automated notification about your payment.</p>
+        </div>
+    </div>
+</body>
+</html>

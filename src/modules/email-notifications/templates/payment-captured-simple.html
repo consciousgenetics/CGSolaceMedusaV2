@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #782B8D;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .success-box {
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .order-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            padding: 15px;
+            color: #666;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://consciousgenetics.lon1.cdn.digitaloceanspaces.com/130.png" alt="Conscious Genetics" style="max-width: 150px; margin-bottom: 10px;">
+            <h1>Payment Received!</h1>
+        </div>
+
+        <div class="success-box">
+            <h3 style="color: #4caf50; margin: 0 0 10px 0;">✅ Payment Successfully Processed</h3>
+            <p style="margin: 0;">Your payment has been received and your order is now being processed.</p>
+        </div>
+
+        <p>Great news! We have successfully received your payment for order <strong>#{{order.display_id}}</strong>.</p>
+
+        <div class="order-info">
+            <h3 style="margin-top: 0;">Order Information:</h3>
+            <p><strong>Order Number:</strong> {{order.display_id}}</p>
+            <p><strong>Customer Email:</strong> {{order.email}}</p>
+            <p><strong>Amount Paid:</strong> £{{order.summary.raw_current_order_total.value}}</p>
+            <p><strong>Currency:</strong> {{order.currency_code}}</p>
+        </div>
+
+        <div class="order-info">
+            <h3 style="margin-top: 0;">What's Next?</h3>
+            <p>• We'll prepare your order for shipping</p>
+            <p>• You'll receive a tracking number once shipped</p>
+            <p>• Expected delivery: 3-5 business days</p>
+        </div>
+
+        <div class="footer">
+            <p>Need help? Contact us at <a href="mailto:info@consciousgenetics.com" style="color: #782B8D;">info@consciousgenetics.com</a></p>
+            <p>&copy; {{currentYear}} Conscious Genetics. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

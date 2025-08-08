@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received - Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #ffffff;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .payment-status {
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .payment-status h3 {
+            color: #4caf50;
+            margin: 0 0 10px 0;
+        }
+        .order-details, .item-list, .address-details {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .order-details td, .address-details td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .item-list th, .item-list td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        .item-list th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .view-order-btn {
+            display: inline-block;
+            background-color: #782B8D;
+            color: #ffffff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            padding: 15px;
+            background-color: #eee;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://consciousgenetics.lon1.cdn.digitaloceanspaces.com/130.png" alt="Conscious Genetics" class="logo">
+            <h1>Payment Received!</h1>
+        </div>
+        <div class="content">
+            <div class="payment-status">
+                <h3>✅ Payment Successfully Processed</h3>
+                <p>Your payment has been received and your order is now being processed.</p>
+            </div>
+
+            <p>Great news! We have successfully received your payment for order <strong>#{{order.display_id}}</strong>. Your order will be shipped soon.</p>
+
+            <h3>Order Details:</h3>
+            <table class="order-details">
+                <tr>
+                    <td><strong>Order ID:</strong></td>
+                    <td>{{order.display_id}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Date:</strong></td>
+                    <td>{{order.created_at}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Status:</strong></td>
+                    <td><span style="color: #4caf50; font-weight: bold;">Paid</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Customer Email:</strong></td>
+                    <td>{{#if order.customer.email}}{{order.customer.email}}{{else}}{{order.email}}{{/if}}</td>
+                </tr>
+            </table>
+
+            <h3>Shipping Address:</h3>
+            <table class="address-details">
+                <tr>
+                    <td><strong>Name:</strong></td>
+                    <td>{{shippingAddress.first_name}} {{shippingAddress.last_name}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Address:</strong></td>
+                    <td>{{shippingAddress.address_1}}</td>
+                </tr>
+                <tr>
+                    <td><strong>City:</strong></td>
+                    <td>{{shippingAddress.city}}, {{shippingAddress.province}} {{shippingAddress.postal_code}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Country:</strong></td>
+                    <td>{{shippingAddress.country_code}}</td>
+                </tr>
+            </table>
+
+            {{#if order.items}}
+            <h3>Order Items:</h3>
+            <table class="item-list">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each order.items}}
+                    <tr>
+                        <td>{{product_title}} - {{title}}</td>
+                        <td>{{quantity}}</td>
+                        <td>{{#if (eq ../order.currency_code 'USD')}}${{else}}£{{/if}}{{unit_price}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            {{else}}
+            <h3>Order Items:</h3>
+            <p style="background-color: #f9f9f9; padding: 15px; border-radius: 5px;">Order items information is being processed and will be available in your order confirmation.</p>
+            {{/if}}
+
+            <table class="order-details">
+                <tr class="total-row">
+                    <td><strong>Total Paid:</strong></td>
+                    <td><strong>{{order.currency_symbol}}{{order.summary.raw_current_order_total.value}}</strong></td>
+                </tr>
+            </table>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{storeUrl}}/orders/{{order.display_id}}" class="view-order-btn">View Your Order</a>
+            </div>
+
+            <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin: 0 0 10px 0;">What's Next?</h4>
+                <p style="margin: 0;">• We'll prepare your order for shipping</p>
+                <p style="margin: 0;">• You'll receive a tracking number once shipped</p>
+                <p style="margin: 0;">• Expected delivery: 3-5 business days</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Need help? Contact us at <a href="mailto:info@consciousgenetics.com" style="color: #782B8D;">info@consciousgenetics.com</a></p>
+            <p>&copy; {{currentYear}} Conscious Genetics. All rights reserved.</p>
+            <p>This is an automated notification about your payment.</p>
+        </div>
+    </div>
+</body>
+</html>

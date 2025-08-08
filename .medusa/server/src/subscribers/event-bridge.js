@@ -1,277 +1,417 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+// import { Modules } from "@medusajs/framework/utils";
+// import { INotificationModuleService } from "@medusajs/framework/types";
+// import { SubscriberArgs, SubscriberConfig } from "@medusajs/medusa";
+// import { EmailTemplates } from "../modules/email-notifications/templates";
+// import axios from "axios";
+// // Import SendGrid directly
+// import sgMail from "@sendgrid/mail";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.config = void 0;
-exports.default = eventBridgeHandler;
-const axios_1 = __importDefault(require("axios"));
-const mail_1 = __importDefault(require("@sendgrid/mail"));
-/**
- * This subscriber acts as a bridge that converts LinkOrderCart.attached events into order.placed events.
- * Medusa's checkout flow is triggering LinkOrderCart events, but we want order.placed events for our email notifications.
- */
-async function eventBridgeHandler({ event, container, }) {
-    try {
-        console.log("🌉 Event bridge received:", event.name);
-        // Only intercept LinkOrderCart.attached events
-        if (event.name !== "LinkOrderCart.attached") {
-            return;
-        }
-        const { data } = event;
-        console.log("🔄 Processing bridge for LinkOrderCart:", JSON.stringify(data, null, 2));
-        if (!data || !data.id) {
-            console.error("❌ Invalid data received in event bridge");
-            return;
-        }
-        // Get API base URL and tokens
-        const baseUrl = process.env.BACKEND_URL || "http://localhost:9000";
-        const publishableKey = 'pk_c3c8c1abbad751cfb6af3bb255ccdff31133489617e2164a8dad770c7e9f8c8c';
-        // Extract cart ID from the event payload or from the ordercart_id directly
-        const cartId = extractCartId(data.id);
-        if (!cartId) {
-            console.error("❌ Could not extract cart ID from event data");
-            // Still try to send emails directly using recent order logic as fallback
-            await sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, container);
-            return;
-        }
-        console.log("🛒 Extracted cart ID:", cartId);
-        // Try to get the order directly from the store API using the cart ID
-        try {
-            console.log("🔍 Attempting to fetch order using cart ID...");
-            // Note: There's no direct cart->order API in Medusa, so we'll fetch recent orders
-            // and look for one associated with this cart
-            // We'll directly try to send emails using the most recent order
-            await sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, container);
-            // Additionally, try to emit an order.placed event
-            try {
-                // Try to get the most recent order to use its ID
-                const ordersResponse = await axios_1.default.get(`${baseUrl}/store/orders?limit=1`, {
-                    headers: {
-                        "x-publishable-api-key": publishableKey
-                    }
-                });
-                if (ordersResponse.data.orders && ordersResponse.data.orders.length > 0) {
-                    const recentOrder = ordersResponse.data.orders[0];
-                    const orderId = recentOrder.id;
-                    console.log(`🚀 Emitting order.placed for recent order ${orderId}`);
-                    // Get the event bus service
-                    const eventBusService = container.resolve("eventBusService");
-                    // Emit the order.placed event with the order ID
-                    // @ts-ignore - Ignore TypeScript error for eventBusService not having emit method
-                    await eventBusService.emit("order.placed", { id: orderId });
-                    console.log("✅ Successfully emitted order.placed event");
-                }
-            }
-            catch (eventError) {
-                console.error("❌ Failed to emit order.placed event:", eventError.message);
-                // Already tried sending emails directly, no need for further action
-            }
-        }
-        catch (error) {
-            console.error("❌ Failed while handling cart:", error.message);
-            // Already tried fallback approach with recent orders
-        }
-    }
-    catch (error) {
-        console.error("❌ Unhandled error in event bridge:", error);
-    }
-}
-/**
- * Extract cart ID from ordercart_id or other formats
- */
-function extractCartId(id) {
-    try {
-        // Sample format: "ordercart_01JT7TX7KZVQXZDD0G8Y649G66"
-        if (id.startsWith("ordercart_")) {
-            // We don't have a direct way to get the cart ID from ordercart_id
-            // This is a limitation of Medusa's API
-            return null;
-        }
-        return id;
-    }
-    catch (error) {
-        console.error("❌ Error extracting cart ID:", error);
-        return null;
-    }
-}
-/**
- * Format monetary values properly from cents to dollars/pounds
- * Medusa stores prices in cents/pennies by default
- */
-function formatMoney(value) {
-    if (value === null || value === undefined) {
-        return "0";
-    }
-    
-    // Make sure we're working with a number
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
-    // Return whole number value without dividing by 100
-    return Math.round(numValue).toString();
-}
-/**
- * Get currency symbol from currency code
- */
-function getCurrencySymbol(currencyCode) {
-    const symbols = {
-        'usd': '$',
-        'eur': '€',
-        'gbp': '£',
-        'jpy': '¥',
-        'cad': 'C$',
-        'aud': 'A$'
-    };
-    
-    return symbols[currencyCode.toLowerCase()] || currencyCode.toUpperCase();
-}
-/**
- * Send emails directly without relying on event handlers, using recent order approach
- */
-async function sendDirectEmailsUsingRecentOrder(baseUrl, publishableKey, container) {
-    try {
-        if (!process.env.SENDGRID_API_KEY) {
-            console.error("❌ SendGrid API key not set!");
-            return;
-        }
-        // Initialize SendGrid
-        mail_1.default.setApiKey(process.env.SENDGRID_API_KEY);
-        console.log("🔍 Fetching most recent order from store API...");
-        // Get the most recent order
-        try {
-            const response = await axios_1.default.get(`${baseUrl}/store/orders?limit=1`, {
-                headers: {
-                    "x-publishable-api-key": publishableKey
-                }
-            });
-            if (!response.data.orders || response.data.orders.length === 0) {
-                console.error("❌ No recent orders found in store API");
-                return;
-            }
-            const order = response.data.orders[0];
-            console.log("✅ Found recent order ID:", order.id);
-            // Extract customer email
-            const customerEmail = order.email;
-            if (!customerEmail) {
-                console.error("❌ Order is missing customer email");
-                return;
-            }
-            // Log original values for debugging
-            console.log("💰 Original price values:", {
-                subtotal: order.subtotal,
-                tax_total: order.tax_total,
-                shipping_total: order.shipping_total,
-                discount_total: order.discount_total,
-                total: order.total
-            });
-            // Prepare order data for templates
-            const orderData = {
-                ...order,
-                display_id: order.display_id || order.id,
-                // Format monetary values
-                total: formatMoney(order.total),
-                subtotal: formatMoney(order.subtotal),
-                tax_total: formatMoney(order.tax_total),
-                shipping_total: formatMoney(order.shipping_total),
-                discount_total: formatMoney(order.discount_total),
-                // Get currency info
-                currency_code: order.currency_code || 'gbp',
-                currency_symbol: getCurrencySymbol(order.currency_code || 'gbp'),
-                items: order.items ? order.items.map(item => {
-                    const formattedPrice = formatMoney(item.unit_price);
-                    return {
-                        ...item,
-                        unit_price: formattedPrice,
-                        title: item.title || (item.variant?.title || ''),
-                        variant: item.variant || {}
-                    };
-                }) : []
-            };
-            // Log formatted values for debugging
-            console.log("💰 Formatted price values:", {
-                subtotal: orderData.subtotal,
-                tax_total: orderData.tax_total,
-                shipping_total: orderData.shipping_total,
-                discount_total: orderData.discount_total,
-                total: orderData.total
-            });
-            const shippingAddress = order.shipping_address || {};
-            console.log("📧 Order details for notifications:", {
-                id: order.id,
-                display_id: order.display_id,
-                email: order.email,
-                total: orderData.total // Use formatted total
-            });
-            // Send customer email
-            try {
-                const customerMsg = {
-                    subject: 'Conscious Genetics Order Submitted',
-                    to: customerEmail,
-                    from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
-                    templateId: process.env.SENDGRID_ORDER_PLACED_ID,
-                    dynamicTemplateData: {
-                        order: orderData,
-                        shippingAddress,
-                        preview: 'Thank you for your order!',
-                        subject: 'Conscious Genetics Order Submitted'
-                    },
-                    categories: ['order-confirmation'],
-                    customArgs: {
-                        subject: 'Conscious Genetics Order Submitted'
-                    }
-                };
-                await mail_1.default.send(customerMsg);
-                console.log("✅ Direct customer email sent to:", customerEmail);
-            }
-            catch (customerError) {
-                console.error("❌ Failed to send direct customer email:", customerError);
-            }
-            // Send admin email
-            try {
-                const adminEmail = 'info@consciousgenetics.com';
-                const adminMsg = {
-                    to: adminEmail,
-                    from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
-                    subject: `New Order #${order.display_id || order.id} from ${customerEmail}`,
-                    templateId: process.env.SENDGRID_ADMIN_NOTIFICATION_ID || process.env.SENDGRID_ORDER_PLACED_ID,
-                    dynamicTemplateData: {
-                        order: orderData,
-                        shippingAddress,
-                        preview: `New Order #${order.display_id || order.id}`,
-                        currentYear: new Date().getFullYear()
-                    }
-                };
-                await mail_1.default.send(adminMsg);
-                console.log("✅ Direct admin email sent to:", adminEmail);
-            }
-            catch (adminError) {
-                console.error("❌ Failed to send direct admin email:", adminError);
-                // Try simple text email as last resort
-                try {
-                    const simpleMsg = {
-                        to: 'info@consciousgenetics.com',
-                        from: process.env.SENDGRID_FROM || 'info@consciousgenetics.com',
-                        subject: `New Order #${order.display_id || order.id} from ${customerEmail}`,
-                        text: `A new order #${order.display_id || order.id} has been placed by ${customerEmail} for a total of ${orderData.currency_symbol}${orderData.total}.`
-                    };
-                    await mail_1.default.send(simpleMsg);
-                    console.log("✅ Simple admin notification sent as fallback");
-                }
-                catch (simpleError) {
-                    console.error("❌ Even simple admin email failed:", simpleError);
-                }
-            }
-        }
-        catch (error) {
-            console.error("❌ Failed to fetch recent orders:", error.message);
-        }
-    }
-    catch (error) {
-        console.error("❌ Error in direct email sending:", error);
-    }
-}
-// This subscriber should be called BEFORE other subscribers to ensure they receive the order.placed event
-exports.config = {
-    event: ["LinkOrderCart.attached"]
-};
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZXZlbnQtYnJpZGdlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL3N1YnNjcmliZXJzL2V2ZW50LWJyaWRnZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7QUFRQSxxQ0FtRkM7QUExRkQsa0RBQXlCO0FBQ3pCLDBEQUFtQztBQUVuQzs7O0dBR0c7QUFDWSxLQUFLLFVBQVUsa0JBQWtCLENBQUMsRUFDL0MsS0FBSyxFQUNMLFNBQVMsR0FDVztJQUNwQixJQUFJLENBQUM7UUFDSCxPQUFPLENBQUMsR0FBRyxDQUFDLDJCQUEyQixFQUFFLEtBQUssQ0FBQyxJQUFJLENBQUMsQ0FBQTtRQUVwRCwrQ0FBK0M7UUFDL0MsSUFBSSxLQUFLLENBQUMsSUFBSSxLQUFLLHdCQUF3QixFQUFFLENBQUM7WUFDNUMsT0FBTTtRQUNSLENBQUM7UUFFRCxNQUFNLEVBQUUsSUFBSSxFQUFFLEdBQUcsS0FBSyxDQUFBO1FBQ3RCLE9BQU8sQ0FBQyxHQUFHLENBQUMseUNBQXlDLEVBQUUsSUFBSSxDQUFDLFNBQVMsQ0FBQyxJQUFJLEVBQUUsSUFBSSxFQUFFLENBQUMsQ0FBQyxDQUFDLENBQUE7UUFFckYsSUFBSSxDQUFDLElBQUksSUFBSSxDQUFDLElBQUksQ0FBQyxFQUFFLEVBQUUsQ0FBQztZQUN0QixPQUFPLENBQUMsS0FBSyxDQUFDLHlDQUF5QyxDQUFDLENBQUE7WUFDeEQsT0FBTTtRQUNSLENBQUM7UUFFRCw4QkFBOEI7UUFDOUIsTUFBTSxPQUFPLEdBQUcsT0FBTyxDQUFDLEdBQUcsQ0FBQyxXQUFXLElBQUksdUJBQXVCLENBQUE7UUFDbEUsTUFBTSxjQUFjLEdBQUcscUVBQXFFLENBQUE7UUFFNUYsMkVBQTJFO1FBQzNFLE1BQU0sTUFBTSxHQUFHLGFBQWEsQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDLENBQUE7UUFDckMsSUFBSSxDQUFDLE1BQU0sRUFBRSxDQUFDO1lBQ1osT0FBTyxDQUFDLEtBQUssQ0FBQyw2QkFB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
+// import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
+// import {
+//   ContainerRegistrationKeys,
+//   Modules,
+//   remoteQueryObjectFromString,
+// } from "@medusajs/framework/utils";
+// // The known publishable API key
+// const PUBLISHABLE_API_KEY =
+//   "pk_c3c8c1abbad751cfb6af3bb255ccdff31133489617e2164a8dad770c7e9f8c8c";
+// // Admin email address
+// const ADMIN_EMAIL = "info@consciousgenetics.com";
+// // Initialize SendGrid
+// if (process.env.SENDGRID_API_KEY) {
+//   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+//   console.log("💌 Customer notifier: SendGrid initialized");
+// } else {
+//   console.error("❌ Customer notifier: SENDGRID_API_KEY is not set!");
+// }
+// // Fetch order data with retry mechanism
+// async function fetchOrderWithRetry(baseUrl, orderId, retry = 3, delay = 2000) {
+//   const publishableKey = PUBLISHABLE_API_KEY;
+//   const apiToken =
+//     process.env.MEDUSA_ADMIN_API_TOKEN || process.env.COOKIE_SECRET;
+//   for (let attempt = 1; attempt <= retry; attempt++) {
+//     try {
+//       console.log(
+//         `🔍 Customer notifier: Fetching order via store API (attempt ${attempt}/${retry}): ${orderId}`
+//       );
+//       const response = await axios.get(`${baseUrl}/store/orders/${orderId}`, {
+//         headers: {
+//           "x-publishable-api-key": publishableKey,
+//         },
+//       });
+//       console.log(
+//         "✅ Customer notifier: Order fetched successfully via store API"
+//       );
+//       return response.data.order;
+//     } catch (storeErr) {
+//       console.error(
+//         `❌ Customer notifier: Store API failed (attempt ${attempt}/${retry}):`,
+//         storeErr.message
+//       );
+//       // If this is the last store API attempt, try admin API
+//       if (attempt === retry) {
+//         try {
+//           console.log(
+//             `🔍 Customer notifier: Fetching order via admin API: ${orderId}`
+//           );
+//           const response = await axios.get(
+//             `${baseUrl}/admin/orders/${orderId}`,
+//             {
+//               headers: {
+//                 "x-medusa-access-token": apiToken,
+//               },
+//             }
+//           );
+//           console.log(
+//             "✅ Customer notifier: Order fetched successfully via admin API"
+//           );
+//           return response.data.order;
+//         } catch (adminErr) {
+//           console.error(
+//             "❌ Customer notifier: Admin API failed:",
+//             adminErr.message
+//           );
+//           throw new Error("Both API methods failed");
+//         }
+//       }
+//       // Wait before retrying
+//       console.log(
+//         `🔄 Customer notifier: Waiting ${delay / 1000}s before retry...`
+//       );
+//       await new Promise((resolve) => setTimeout(resolve, delay));
+//     }
+//   }
+// }
+// export default async function orderPlacedHandler({
+//   event,
+//   container,
+// }: SubscriberArgs<any>) {
+//   try {
+//     console.log("🔔 Customer notifier received event:", event.name);
+//     // Only process order.placed events - we're now using the event-bridge to convert LinkOrderCart events
+//     if (event.name !== "order.placed") {
+//       console.log(`Customer notifier ignoring event ${event.name}`);
+//       return;
+//     }
+//     // Extract data from the event
+//     const { data } = event;
+//     console.log(
+//       "Customer notifier processing order event:",
+//       JSON.stringify(data || {}, null, 2)
+//     );
+//     if (!data || !data.id) {
+//       console.error("❌ Customer notifier: Invalid data received");
+//       return;
+//     }
+//     // Use the notification module directly
+//     const notificationModuleService = container.resolve(Modules.NOTIFICATION);
+//     const baseUrl = process.env.BACKEND_URL || "http://localhost:9000";
+//     // For order.placed events, use the order ID directly
+//     const orderId = data.id;
+//     // Fetch order data with retries
+//     let order;
+//     try {
+//       order = await fetchOrderWithRetry(baseUrl, orderId);
+//     } catch (err) {
+//       console.error(
+//         "❌ Customer notifier: All API attempts failed, using fallback:",
+//         err.message
+//       );
+//       // Last resort - use the order data from the event if available
+//       if (data.email && data.items) {
+//         console.log(
+//           "🔄 Customer notifier: Using order data from event as fallback"
+//         );
+//         order = data;
+//       } else if (data.result && data.result.order) {
+//         console.log(
+//           "🔄 Customer notifier: Using order data from cart completion result"
+//         );
+//         order = data.result.order;
+//       } else {
+//         // Wait a bit longer before giving up completely - the order may still be processing
+//         console.log(
+//           "🕒 Customer notifier: Waiting 5s for order to be fully processed..."
+//         );
+//         await new Promise((resolve) => setTimeout(resolve, 5000));
+//         try {
+//           // One final attempt after waiting
+//           order = await fetchOrderWithRetry(baseUrl, orderId, 1);
+//         } catch (finalErr) {
+//           // If all failed, create a minimal order object for logging purposes
+//           console.log(
+//             "🔄 Customer notifier: Creating minimal order object from ID"
+//           );
+//           order = {
+//             id: orderId,
+//             email: process.env.ADMIN_EMAIL || "info@consciousgenetics.com", // Send to admin as fallback
+//             ...data, // Include any other data from the event
+//           };
+//         }
+//       }
+//     }
+//     if (!order) {
+//       console.error(
+//         "❌ Customer notifier: Order not found or could not be retrieved"
+//       );
+//       return;
+//     }
+//     // Don't proceed if we still don't have essential data
+//     if (!order.total || !order.subtotal) {
+//       console.error(
+//         "❌ Customer notifier: Critical order data missing, cannot format email"
+//       );
+//       // Only proceed with admin notification about the issue
+//       try {
+//         const msg = {
+//           to: ADMIN_EMAIL,
+//           from: process.env.SENDGRID_FROM || "info@consciousgenetics.com",
+//           subject: `⚠️ Order Processing Issue: #${
+//             order.display_id || order.id
+//           }`,
+//           text: `An order (${order.id}) was placed but the system couldn't retrieve complete details. Manual follow-up required.`,
+//         };
+//         if (process.env.SENDGRID_API_KEY) {
+//           await sgMail.send(msg);
+//           console.log("✅ Admin alert sent about order data issue");
+//         }
+//       } catch (alertErr) {
+//         console.error("❌ Failed to send admin alert:", alertErr);
+//       }
+//       return;
+//     }
+//     console.log(
+//       "Customer notifier: Order retrieved successfully:",
+//       `ID: ${order.id}, ` +
+//         `Customer: ${order.email}, ` +
+//         `Total: ${order.total}`
+//     );
+//     // Use the order data directly
+//     const shippingAddress = order.shipping_address || {};
+//     // Log original price values for debugging
+//     console.log("💰 Customer notifier: Original price values:", {
+//       subtotal: order.subtotal,
+//       tax_total: order.tax_total,
+//       shipping_total: order.shipping_total,
+//       discount_total: order.discount_total,
+//       total: order.total,
+//     });
+//     // Format the order for the template
+//     const formattedOrder = formatOrderForTemplate(order);
+//     // Log formatted price values
+//     console.log("💵 Customer notifier: Formatted price values:", {
+//       subtotal: formattedOrder.subtotal,
+//       tax_total: formattedOrder.tax_total,
+//       shipping_total: formattedOrder.shipping_total,
+//       discount_total: formattedOrder.discount_total,
+//       total: formattedOrder.total,
+//     });
+//     // Only proceed if we have a valid email
+//     if (!order.email) {
+//       console.error("❌ Customer notifier: Order is missing email address");
+//       return;
+//     }
+//     try {
+//       console.log("📧 Customer notifier: Sending email to:", order.email);
+//       console.log(
+//         "📄 Customer notifier: Using template ID:",
+//         process.env.SENDGRID_ORDER_PLACED_ID
+//       );
+//       // First try using Medusa's notification module for customer email
+//       try {
+//         await notificationModuleService.createNotifications({
+//           to: order.email,
+//           channel: "email",
+//           template: process.env.SENDGRID_ORDER_PLACED_ID,
+//           data: {
+//             emailOptions: {
+//               from: process.env.SENDGRID_FROM || "info@consciousgenetics.com",
+//               replyTo: "info@consciousgenetics.com",
+//               subject: "Your order has been placed",
+//             },
+//             order: formattedOrder,
+//             shippingAddress,
+//             preview: "Thank you for your order!",
+//           },
+//         });
+//         console.log(
+//           "✅ Customer notifier: Email sent successfully via Medusa notification module"
+//         );
+//       } catch (medusaError) {
+//         console.error(
+//           "❌ Customer notifier: Error sending via Medusa module:",
+//           medusaError
+//         );
+//         // If Medusa's notification fails, try sending directly via SendGrid
+//         console.log(
+//           "🔄 Customer notifier: Falling back to direct SendGrid API..."
+//         );
+//         // Use SendGrid directly as a fallback for customer
+//         const msg = {
+//           to: order.email,
+//           from: process.env.SENDGRID_FROM || "info@consciousgenetics.com",
+//           templateId: process.env.SENDGRID_ORDER_PLACED_ID,
+//           dynamicTemplateData: {
+//             order: formattedOrder,
+//             shippingAddress,
+//             preview: "Thank you for your order!",
+//           },
+//         };
+// await sgMail.send(msg);
+//         console.log(
+//           "✅ Customer notifier: Email sent successfully via direct SendGrid API"
+//         );
+//       }
+//     } catch (error) {
+//       console.error(
+//         "❌ Customer notifier: All email sending attempts failed:",
+//         error
+//       );
+//       // Log detailed error information
+//       if (error instanceof Error) {
+//         console.error("❌ Customer notifier: Error details:", {
+//           name: error.name,
+//           message: error.message,
+//           stack: error.stack,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.error("❌ Customer notifier: Unhandled error:", error);
+//   }
+// }
+// /**
+//  * Format monetary values properly from cents to dollars/pounds
+//  */
+// function formatMoney(value) {
+//   if (value === null || value === undefined) {
+//     return "0.00";
+//   }
+//   // Make sure we're working with a number
+//   const numValue = typeof value === "string" ? parseFloat(value) : value;
+//   // Check if the value is already in dollars/pounds format
+//   // If the value is small (e.g., 10.98 instead of 1098), assume it's already formatted
+//   if (numValue < 100 && numValue % 1 !== 0) {
+//     // Value is likely already in dollars/pounds format (has decimals and is small)
+//     return numValue.toFixed(2);
+//   } else {
+//     // Value is likely in cents, convert to dollars/pounds
+//     return (numValue / 100).toFixed(2);
+//   }
+// }
+// /**
+//  * Format the order object for the email template
+//  */
+// function formatOrderForTemplate(order) {
+//   // Format the order items
+//   const formattedItems = order.items
+//     ? order.items.map((item) => ({
+//         ...item,
+//         unit_price: formatMoney(item.unit_price),
+//         title: item.title || item.variant?.title || "",
+//         variant: item.variant || {},
+//       }))
+//     : [];
+//   // Return the formatted order object
+//   return {
+//     ...order,
+//     display_id: order.display_id || order.id,
+//     total: formatMoney(order.total),
+//     subtotal: formatMoney(order.subtotal),
+//     tax_total: formatMoney(order.tax_total),
+//     shipping_total: formatMoney(order.shipping_total),
+//     discount_total: formatMoney(order.discount_total || 0),
+//     items: formattedItems,
+//   };
+// }
+// Now ONLY listen for order.placed events - the event-bridge will convert LinkOrderCart events
+// export default async function placeOrder({
+//   event: { data },
+//   container,
+// }: SubscriberArgs<{ id: string }>) {
+//   const notificationModuleService = container.resolve(Modules.NOTIFICATION);
+//   const fields = [
+//     "id",
+//     "version",
+//     "display_id",
+//     "status",
+//     "currency_code",
+//     "created_at",
+//     "updated_at",
+//     "original_item_total",
+//     "original_item_subtotal",
+//     "original_item_tax_total",
+//     "item_total",
+//     "item_subtotal",
+//     "item_tax_total",
+//     "original_total",
+//     "original_subtotal",
+//     "original_tax_total",
+//     "total",
+//     "subtotal",
+//     "tax_total",
+//     "discount_subtotal",
+//     "discount_total",
+//     "discount_tax_total",
+//     "gift_card_total",
+//     "gift_card_tax_total",
+//     "shipping_total",
+//     "shipping_subtotal",
+//     "shipping_tax_total",
+//     "original_shipping_total",
+//     "original_shipping_subtotal",
+//     "original_shipping_tax_total",
+//     "raw_original_item_total",
+//     "raw_original_item_subtotal",
+//     "raw_original_item_tax_total",
+//     "raw_item_total",
+//     "raw_item_subtotal",
+//     "raw_item_tax_total",
+//     "raw_original_total",
+//     "raw_original_subtotal",
+//     "raw_original_tax_total",
+//     "raw_total",
+//     "raw_subtotal",
+//     "raw_tax_total",
+//     "raw_discount_total",
+//     "raw_discount_tax_total",
+//     "raw_gift_card_total",
+//     "raw_gift_card_tax_total",
+//     "raw_shipping_total",
+//     "raw_shipping_subtotal",
+//     "raw_shipping_tax_total",
+//     "raw_original_shipping_total",
+//     "raw_original_shipping_subtotal",
+//     "raw_original_shipping_tax_total",
+//     "customer.*",
+//     "items.*",
+//   ];
+//   const queryObject = remoteQueryObjectFromString({
+//     entryPoint: "order",
+//     variables: {
+//       filters: {
+//         id: data.id,
+//       },
+//     },
+//     fields,
+//   });
+//   const remoteQuery = container.resolve(ContainerRegistrationKeys.REMOTE_QUERY);
+//   const [order] = await remoteQuery(queryObject);
+//   await notificationModuleService.createNotifications({
+//     to: order.customer.email,
+//     channel: "email",
+//     template: process.env.SENDGRID_ORDER_PLACED_ID,
+//     data: order,
+//   });
+//   await notificationModuleService.createNotifications({
+//     to: "info@consciousgenetics.com",
+//     channel: "email",
+//     template: process.env.SENDGRID_ADMIN_NOTIFICATION_ID,
+//     data: order,
+//   });
+// }
+// export const config: SubscriberConfig = {
+//   event: "order.placed",
+// };
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZXZlbnQtYnJpZGdlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL3N1YnNjcmliZXJzL2V2ZW50LWJyaWRnZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUEsdURBQXVEO0FBQ3ZELDBFQUEwRTtBQUMxRSx1RUFBdUU7QUFDdkUsNkVBQTZFO0FBQzdFLDZCQUE2QjtBQUM3Qiw4QkFBOEI7QUFDOUIsdUNBQXVDOztBQUV2QywrRUFBK0U7QUFDL0UsV0FBVztBQUNYLCtCQUErQjtBQUMvQixhQUFhO0FBQ2IsaUNBQWlDO0FBQ2pDLHNDQUFzQztBQUV0QyxtQ0FBbUM7QUFDbkMsOEJBQThCO0FBQzlCLDJFQUEyRTtBQUMzRSx5QkFBeUI7QUFDekIsb0RBQW9EO0FBRXBELHlCQUF5QjtBQUN6QixzQ0FBc0M7QUFDdEMsb0RBQW9EO0FBQ3BELCtEQUErRDtBQUMvRCxXQUFXO0FBQ1gsd0VBQXdFO0FBQ3hFLElBQUk7QUFFSiwyQ0FBMkM7QUFDM0Msa0ZBQWtGO0FBQ2xGLGdEQUFnRDtBQUNoRCxxQkFBcUI7QUFDckIsdUVBQXVFO0FBRXZFLHlEQUF5RDtBQUN6RCxZQUFZO0FBQ1oscUJBQXFCO0FBQ3JCLHlHQUF5RztBQUN6RyxXQUFXO0FBQ1gsaUZBQWlGO0FBQ2pGLHFCQUFxQjtBQUNyQixxREFBcUQ7QUFDckQsYUFBYTtBQUNiLFlBQVk7QUFDWixxQkFBcUI7QUFDckIsMEVBQTBFO0FBQzFFLFdBQVc7QUFDWCxvQ0FBb0M7QUFDcEMsMkJBQTJCO0FBQzNCLHVCQUF1QjtBQUN2QixrRkFBa0Y7QUFDbEYsMkJBQTJCO0FBQzNCLFdBQVc7QUFFWCxnRUFBZ0U7QUFDaEUsaUNBQWlDO0FBQ2pDLGdCQUFnQjtBQUNoQix5QkFBeUI7QUFDekIsK0VBQStFO0FBQy9FLGVBQWU7QUFDZiw4Q0FBOEM7QUFDOUMsb0RBQW9EO0FBQ3BELGdCQUFnQjtBQUNoQiwyQkFBMkI7QUFDM0IscURBQXFEO0FBQ3JELG1CQUFtQjtBQUNu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

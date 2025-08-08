@@ -74,6 +74,19 @@ const medusaConfig = {
             resolve: '@medusajs/event-bus-redis',
             options: {
               redisUrl: REDIS_URL,
+              redis: {
+                tls: REDIS_URL.startsWith('rediss://') ? {} : undefined,
+                maxRetriesPerRequest: 3,
+                enableOfflineQueue: true,
+                reconnectOnError: (err) => {
+                  console.log(`Redis event-bus reconnecting on error: ${err.message}`);
+                  return true;
+                },
+                retryStrategy: (times) => {
+                  console.log(`Redis event-bus retry attempt: ${times}`);
+                  return Math.min(times * 100, 3000);
+                }
+              }
             },
           },
           {
@@ -82,6 +95,17 @@ const medusaConfig = {
             options: {
               redis: {
                 url: REDIS_URL,
+                tls: REDIS_URL.startsWith('rediss://') ? {} : undefined,
+                maxRetriesPerRequest: 3,
+                enableOfflineQueue: true,
+                reconnectOnError: (err) => {
+                  console.log(`Redis workflow-engine reconnecting on error: ${err.message}`);
+                  return true;
+                },
+                retryStrategy: (times) => {
+                  console.log(`Redis workflow-engine retry attempt: ${times}`);
+                  return Math.min(times * 100, 3000);
+                }
               },
             },
           },

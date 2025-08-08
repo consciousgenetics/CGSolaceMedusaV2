@@ -1,4 +1,4 @@
-import { Text, Section, Hr } from '@react-email/components'
+import { Text, Section } from '@react-email/components'
 import * as React from 'react'
 import { Base } from './base'
 import { OrderDTO, OrderAddressDTO } from '@medusajs/framework/types'
@@ -6,18 +6,38 @@ import { OrderDTO, OrderAddressDTO } from '@medusajs/framework/types'
 export const PAYMENT_CAPTURED = 'payment-captured'
 
 interface PaymentCapturedPreviewProps {
-  order: OrderDTO & { display_id: string; summary: { raw_current_order_total: { value: number } } }
-  shippingAddress: OrderAddressDTO
+  order: OrderDTO & {
+    display_id: string
+    currency_code: string
+    items: Array<{
+      id: string
+      title: string
+      quantity: number
+      unit_price: number
+    }>
+    summary: { raw_current_order_total: { value: number } }
+  }
+  shippingAddress?: OrderAddressDTO | null
 }
 
 export interface PaymentCapturedTemplateProps {
-  order: OrderDTO & { display_id: string; summary: { raw_current_order_total: { value: number } } }
-  shippingAddress: OrderAddressDTO
+  order: OrderDTO & {
+    display_id: string
+    currency_code: string
+    items: Array<{
+      id: string
+      title: string
+      quantity: number
+      unit_price: number
+    }>
+    summary: { raw_current_order_total: { value: number } }
+  }
+  shippingAddress?: OrderAddressDTO | null
   preview?: string
 }
 
 export const isPaymentCapturedTemplateData = (data: any): data is PaymentCapturedTemplateProps =>
-  typeof data.order === 'object' && typeof data.shippingAddress === 'object'
+  typeof data?.order === 'object'
 
 export const PaymentCapturedTemplate: React.FC<PaymentCapturedTemplateProps> & {
   PreviewProps: PaymentCapturedPreviewProps
@@ -27,20 +47,22 @@ export const PaymentCapturedTemplate: React.FC<PaymentCapturedTemplateProps> & {
       <Section style={{ maxWidth: '600px', background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}>
         <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
           <img src="https://consciousgenetics.lon1.cdn.digitaloceanspaces.com/130.png" alt="Conscious Genetics" style={{ maxWidth: '150px' }} />
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', margin: '20px 0' }}>Payment Received!</Text>
+          <Text style={{ fontSize: '24px', fontWeight: 'bold', margin: '20px 0' }}>Payment received</Text>
         </div>
 
         <Text style={{ margin: '0 0 20px' }}>
-          Great news! We have successfully received your payment for order #{order.display_id}. Your order is now being processed and will be shipped soon.
+          Thank you! We have received your payment. Below is a summary of your order.
         </Text>
 
-        <div style={{ margin: '20px 0' }}>
-          <Text style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px' }}>Shipping Address</Text>
-          <Text style={{ margin: '0 0 5px' }}>{shippingAddress.first_name} {shippingAddress.last_name}</Text>
-          <Text style={{ margin: '0 0 5px' }}>{shippingAddress.address_1}</Text>
-          <Text style={{ margin: '0 0 5px' }}>{shippingAddress.city}, {shippingAddress.province} {shippingAddress.postal_code}</Text>
-          <Text style={{ margin: '0 0 20px' }}>{shippingAddress.country_code}</Text>
-        </div>
+        {shippingAddress ? (
+          <div style={{ margin: '20px 0' }}>
+            <Text style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px' }}>Shipping Address</Text>
+            <Text style={{ margin: '0 0 5px' }}>{shippingAddress.first_name} {shippingAddress.last_name}</Text>
+            <Text style={{ margin: '0 0 5px' }}>{shippingAddress.address_1}</Text>
+            <Text style={{ margin: '0 0 5px' }}>{shippingAddress.city}, {shippingAddress.province} {shippingAddress.postal_code}</Text>
+            <Text style={{ margin: '0 0 20px' }}>{shippingAddress.country_code}</Text>
+          </div>
+        ) : null}
 
         <div style={{ margin: '20px 0' }}>
           <Text style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 15px' }}>Order Summary</Text>
@@ -59,31 +81,8 @@ export const PaymentCapturedTemplate: React.FC<PaymentCapturedTemplateProps> & {
             ))}
           </div>
           <Text style={{ margin: '20px 0', fontWeight: 'bold' }}>
-            Total Paid: {order.summary.raw_current_order_total.value} {order.currency_code}
+            Total paid: {order.summary.raw_current_order_total.value} {order.currency_code}
           </Text>
-        </div>
-
-        <div style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '5px', margin: '20px 0' }}>
-          <Text style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 10px' }}>✅ Payment Confirmed</Text>
-          <Text style={{ margin: '0 0 5px' }}>Payment Method: Card Payment</Text>
-          <Text style={{ margin: '0' }}>Status: Successfully Processed</Text>
-        </div>
-
-        <div style={{ textAlign: 'center', margin: '20px 0' }}>
-          <a href={`${process.env.STORE_URL}/orders/${order.display_id}`} style={{
-            display: 'inline-block',
-            width: '200px',
-            margin: '20px auto',
-            padding: '10px',
-            background: '#782B8D',
-            color: '#ffffff',
-            textAlign: 'center',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            borderRadius: '5px'
-          }}>
-            View your order
-          </a>
         </div>
 
         <div style={{ textAlign: 'center', paddingTop: '20px', fontSize: '14px' }}>
@@ -97,23 +96,23 @@ export const PaymentCapturedTemplate: React.FC<PaymentCapturedTemplateProps> & {
 PaymentCapturedTemplate.PreviewProps = {
   order: {
     id: 'test-order-id',
-    display_id: 'ORD-123',
+    display_id: 'ORD-12345',
     created_at: new Date().toISOString(),
-    email: 'test@example.com',
+    email: 'customer@example.com',
     currency_code: 'USD',
     items: [
-      { id: 'item-1', title: 'Item 1', quantity: 2, unit_price: 10 },
-      { id: 'item-2', title: 'Item 2', quantity: 1, unit_price: 25 }
+      { id: 'item-1', title: 'Organic DNA Test Kit', quantity: 1, unit_price: 199.99 },
+      { id: 'item-2', title: 'Health Report Analysis', quantity: 1, unit_price: 49.99 }
     ],
-    summary: { raw_current_order_total: { value: 45 } }
+    summary: { raw_current_order_total: { value: 249.98 } }
   },
   shippingAddress: {
-    first_name: 'Test',
-    last_name: 'User',
-    address_1: '123 Main St',
-    city: 'Anytown',
+    first_name: 'John',
+    last_name: 'Doe',
+    address_1: '123 Main Street',
+    city: 'San Francisco',
     province: 'CA',
-    postal_code: '12345',
+    postal_code: '94102',
     country_code: 'US'
   }
 } as PaymentCapturedPreviewProps

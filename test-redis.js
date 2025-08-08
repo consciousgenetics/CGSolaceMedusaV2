@@ -1,7 +1,7 @@
 const Redis = require('ioredis');
 
 // Redis connection details from your config
-const redisUrl = "redis://default:JCBdHwOXaNPQsQfqrlLvfoyTvxsLkZHa@shinkansen.proxy.rlwy.net:21925";
+const redisUrl = "rediss://red-cv6vt0nnoe9s73c38dmg:Me9L0csaRcsyCr0WxDOvHOvm1JuWRJ7I@oregon-keyvalue.render.com:6379";
 
 // Configure Redis client with more debug and error information
 const redis = new Redis(redisUrl, {
