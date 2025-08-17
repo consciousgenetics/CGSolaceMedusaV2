@@ -32,14 +32,32 @@ const OrderWidget = ({ data }: DetailWidgetProps<AdminOrder>) => {
         );
       } catch (err) {
         console.error("Failed to fetch comment:", err);
+        // Check if it's a network/CORS error
+        if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+          console.error("Network error - check CORS configuration and backend URL");
+        }
         setComment(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchComment();
-  }, [data.id]);
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Comment fetch timeout - setting loading to false");
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    fetchComment().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [data.id, loading]);
 
   return (
     <Container className="divide-y p-0">
