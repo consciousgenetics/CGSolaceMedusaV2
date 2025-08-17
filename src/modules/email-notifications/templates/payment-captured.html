@@ -174,10 +174,35 @@
             <p style="background-color: #f9f9f9; padding: 15px; border-radius: 5px;">Order items information is being processed and will be available in your order confirmation.</p>
             {{/if}}
 
+            <h3>Price Breakdown:</h3>
             <table class="order-details">
+                {{#if order.subtotal}}
+                <tr>
+                    <td><strong>Subtotal:</strong></td>
+                    <td>{{#if (eq order.currency_code 'USD')}}${{else}}£{{/if}}{{order.subtotal}}</td>
+                </tr>
+                {{/if}}
+                {{#if order.shipping_total}}
+                <tr>
+                    <td><strong>Shipping:</strong></td>
+                    <td>{{#if (eq order.currency_code 'USD')}}${{else}}£{{/if}}{{order.shipping_total}}</td>
+                </tr>
+                {{/if}}
+                {{#if order.tax_total}}
+                <tr>
+                    <td><strong>Tax:</strong></td>
+                    <td>{{#if (eq order.currency_code 'USD')}}${{else}}£{{/if}}{{order.tax_total}}</td>
+                </tr>
+                {{/if}}
+                {{#if order.discount_total}}
+                <tr>
+                    <td><strong>Discount:</strong></td>
+                    <td>-{{#if (eq order.currency_code 'USD')}}${{else}}£{{/if}}{{order.discount_total}}</td>
+                </tr>
+                {{/if}}
                 <tr class="total-row">
                     <td><strong>Total Paid:</strong></td>
-                    <td><strong>{{order.currency_symbol}}{{order.summary.raw_current_order_total.value}}</strong></td>
+                    <td><strong>{{#if (eq order.currency_code 'USD')}}${{else}}£{{/if}}{{order.summary.raw_current_order_total.value}}</strong></td>
                 </tr>
             </table>
 
